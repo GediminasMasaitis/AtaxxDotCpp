@@ -100,6 +100,21 @@ void Uai::handle_position(stringstream& reader)
     }
 }
 
+void Uai::handle_perft(stringstream& reader)
+{
+    int depth = 5;
+    if (!reader.eof())
+    {
+        reader >> depth;
+    }
+    Perft::perft_deepen(current_pos, depth);
+}
+
+void Uai::handle_go(std::stringstream& reader)
+{
+    search.run(current_pos);
+}
+
 void Uai::handle_input(const std::string& command)
 {
     stringstream reader(command);
@@ -126,12 +141,11 @@ void Uai::handle_input(const std::string& command)
         }
         else if(token == "perft")
         {
-            int depth = 5;
-            if(!reader.eof())
-            {
-                reader >> depth;
-            }
-            Perft::perft_deepen(current_pos, depth);
+            handle_perft(reader);
+        }
+        else if(token == "go")
+        {
+            handle_go(reader);
         }
         else if (token == "quit" || token == "exit")
         {
@@ -143,6 +157,8 @@ void Uai::handle_input(const std::string& command)
 void Uai::run()
 {
     current_pos = Fens::parse(initial_fen);
+    search = Search();
+
     while (true)
     {
         string command = get_uci_line();

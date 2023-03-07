@@ -119,6 +119,9 @@ using MoveStr = std::string;
 using Ply = int8_t;
 constexpr Ply MaxPly = 127;
 
+using Score = int16_t;
+using MoveScore = int32_t;
+
 #define EXCEPTIONS 1
 static void do_throw(const std::string&& message)
 {
