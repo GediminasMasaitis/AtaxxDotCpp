@@ -5,25 +5,12 @@
 
 using namespace std;
 
-static constexpr Square lsb(const Bitboard bitboard)
-{
-    return static_cast<Square>(countr_zero(bitboard));
-}
-
-static Square pop_lsb(Bitboard& bitboard)
-{
-    const auto square = lsb(bitboard);
-    bitboard &= bitboard - 1;
-    return square;
-}
-
 void MoveGenerator::generate(const Position& pos, MoveArray& move_array, MoveCount& move_index)
 {
     auto pieces = pos.Bitboards[pos.Turn];
     auto near = pieces | north(pieces) | south(pieces);
     near |= west(near) | east(near);
     near &= pos.Bitboards[Pieces::Empty];
-
 
     while(near)
     {
@@ -47,5 +34,9 @@ void MoveGenerator::generate(const Position& pos, MoveArray& move_array, MoveCou
         }
     }
 
-    auto a = 123;
+    //if(move_index == 0)
+    //{
+    //    move_array[move_index] = no_move;
+    //    move_index++;
+    //}
 }

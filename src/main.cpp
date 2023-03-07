@@ -1,5 +1,6 @@
 #include "fens.h"
 #include "movegen.h"
+#include "perft.h"
 
 #include <iostream>
 
@@ -16,6 +17,8 @@ int main()
     MoveArray moves;
     MoveCount move_count = 0;
     MoveGenerator::generate(pos, moves, move_count);
+
+    Perft::perft_suite();
 
     return 0;
 }

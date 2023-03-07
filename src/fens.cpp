@@ -44,7 +44,7 @@ Position Fens::parse(const Fen& fen)
         else if(ch == 'o')
         {
             check_file(fen, file);
-            pos.Bitboards[Pieces::White] |= GetBitboard(file, rank);
+            pos.Bitboards[Pieces::White] |= get_bitboard(file, rank);
             pos.Squares[square] = Pieces::White;
             file++;
 
@@ -52,14 +52,14 @@ Position Fens::parse(const Fen& fen)
         else if (ch == 'x')
         {
             check_file(fen, file);
-            pos.Bitboards[Pieces::Black] |= GetBitboard(file, rank);
+            pos.Bitboards[Pieces::Black] |= get_bitboard(file, rank);
             pos.Squares[square] = Pieces::Black;
             file++;
         }
         else if (ch == '-')
         {
             check_file(fen, file);
-            pos.Bitboards[Pieces::Wall] |= GetBitboard(file, rank);
+            pos.Bitboards[Pieces::Wall] |= get_bitboard(file, rank);
             pos.Squares[square] = Pieces::Wall;
             file++;
         }
@@ -138,7 +138,7 @@ Fen Fens::serialize(const Position& pos)
                 file++;
             }
         }
-        if(rank != 6)
+        if(rank != 0)
         {
             ss << string("/");
         }

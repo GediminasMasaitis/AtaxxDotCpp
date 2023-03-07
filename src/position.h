@@ -8,6 +8,8 @@ struct Position
     Color Turn;
     EachSquare<Square> Squares;
     EachPiece<Bitboard> Bitboards;
+
+    Position make_move(const Move& move) const;
 };
 
 #endif // !POSITION_H

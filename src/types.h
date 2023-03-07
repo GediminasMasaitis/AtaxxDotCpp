@@ -4,6 +4,7 @@
 // Just a "random stuff" header for now
 
 #include <array>
+#include <bit>
 #include <cstdint>
 #include <string>
 
@@ -53,14 +54,26 @@ template<class T>
 using EachPiece = std::array<T, Pieces::Count>;
 
 using Bitboard = uint64_t;
-static constexpr Bitboard GetBitboard(const Square square)
+static constexpr Bitboard get_bitboard(const Square square)
 {
     return 1ULL << square;
 }
 
-static constexpr Bitboard GetBitboard(const File file, const Rank rank)
+static constexpr Bitboard get_bitboard(const File file, const Rank rank)
 {
-    return GetBitboard(GetSquare(file, rank));
+    return get_bitboard(GetSquare(file, rank));
+}
+
+static constexpr Square lsb(const Bitboard bitboard)
+{
+    return static_cast<Square>(std::countr_zero(bitboard));
+}
+
+static Square pop_lsb(Bitboard& bitboard)
+{
+    const auto square = lsb(bitboard);
+    bitboard &= bitboard - 1;
+    return square;
 }
 
 static constexpr Bitboard available_position = 0x007F7F7F7F7F7F7FULL;
@@ -106,6 +119,8 @@ struct Move
     {
         
     }
+
+    bool operator==(const Move& move) const = default;
 };
 static constexpr Move no_move = Move(Colors::White, 0, 0);
 
@@ -114,5 +129,8 @@ constexpr MoveCount MaxMoveCount = 1024;
 template<class T>
 using EachMove = std::array<T, MaxMoveCount>;
 using MoveArray = EachMove<Move>;
+
+using Ply = int8_t;
+constexpr Ply MaxPly = 127;
 
 #endif // !TYPES_H
