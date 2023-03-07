@@ -44,3 +44,9 @@ Position Position::make_move(const Move& move) const
     
     return new_pos;
 }
+
+Position Position::make_move(const MoveStr& move_str) const
+{
+    const Move move = Move::from_move_str(Turn, move_str);
+    return make_move(move);
+}

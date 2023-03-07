@@ -10,8 +10,7 @@ static void check_file(const Fen& fen, const File file)
 {
     if (file > 6)
     {
-        cout << "Malformed FEN " << fen << endl;
-        exit(-1);
+        do_throw("Malformed FEN " + fen);
     }
 }
 
@@ -30,13 +29,12 @@ Position Fens::parse(const Fen& fen)
         const Rank rank = 6 - flipped_rank;
         char ch;
         ss.get(ch);
-        const auto square = GetSquare(file, rank);
+        const auto square = get_square(file, rank);
         if(ch == '/')
         {
             if(file != 7)
             {
-                cout << "Malformed FEN " << fen << endl;
-                exit(-1);
+                do_throw("Malformed FEN " + fen);
             }
             file = 0;
             flipped_rank++;
@@ -73,8 +71,7 @@ Position Fens::parse(const Fen& fen)
         {
             if(rank != 0 || file != 7)
             {
-                cout << "Malformed FEN " << fen << endl;
-                exit(-1);
+                do_throw("Malformed FEN " + fen);
             }
             break;
         }
@@ -92,8 +89,7 @@ Position Fens::parse(const Fen& fen)
     }
     else
     {
-        cout << "Malformed FEN " << fen << endl;
-        exit(-1);
+        do_throw("Malformed FEN " + fen);
     }
 
     pos.Bitboards[Pieces::Empty] = ~(pos.Bitboards[Pieces::White] | pos.Bitboards[Pieces::Black] | pos.Bitboards[Pieces::Wall]) & available_position;
@@ -110,12 +106,12 @@ Fen Fens::serialize(const Position& pos)
         File file = 0;
         while(file < 7)
         {
-            const auto square = GetSquare(file, rank);
+            const auto square = get_square(file, rank);
             const auto piece = pos.Squares[square];
             if(piece == Pieces::Empty)
             {
                 File empty_file = 0;
-                while(file < 7 && pos.Squares[GetSquare(file, rank)] == Pieces::Empty)
+                while(file < 7 && pos.Squares[get_square(file, rank)] == Pieces::Empty)
                 {
                     empty_file++;
                     file++;

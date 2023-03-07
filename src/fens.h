@@ -2,6 +2,7 @@
 #define FEN_H 1
 
 #include "position.h"
+#include <string>
 
 struct Fens
 {

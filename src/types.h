@@ -6,6 +6,7 @@
 #include <array>
 #include <bit>
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 
 using Rank = uint8_t;
@@ -16,19 +17,29 @@ template<class T>
 using EachSquare = std::array<T, SquareCount>;
 static constexpr Square no_square = 64;
 
-static constexpr Square GetFile(const Square square)
+static constexpr Square get_file(const Square square)
 {
     return square % 8;
 }
 
-static constexpr Square GetRank(const Square square)
+static constexpr Square get_rank(const Square square)
 {
     return square / 8;
 }
 
-static constexpr Square GetSquare(const File file, const Rank rank)
+static constexpr Square get_square(const File file, const Rank rank)
 {
     return rank * 8 + file;
+}
+
+static constexpr std::string to_square_str(const Square square)
+{
+    return std::string({ static_cast<char>('a' + get_file(square)), static_cast<char>('1' + get_rank(square)) });
+}
+
+static constexpr Square from_square_str(const std::string& square_str)
+{
+    return get_square(square_str[0] - 'a', square_str[1] - '1');
 }
 
 using Color = uint8_t;
@@ -61,7 +72,7 @@ static constexpr Bitboard get_bitboard(const Square square)
 
 static constexpr Bitboard get_bitboard(const File file, const Rank rank)
 {
-    return get_bitboard(GetSquare(file, rank));
+    return get_bitboard(get_square(file, rank));
 }
 
 static constexpr Square lsb(const Bitboard bitboard)
@@ -103,34 +114,20 @@ static constexpr std::array<Bitboard, 8> Ranks =
 };
 
 using Fen = std::string;
-
-struct Move
-{
-    Color Turn;
-    Square From;
-    Square To;
-
-    constexpr Move(const Color turn, const Square from, const Square to)
-        : Turn(turn), From(from), To(to)
-    {
-    }
-
-    constexpr Move() : Move(Colors::White, 0, 0)
-    {
-        
-    }
-
-    bool operator==(const Move& move) const = default;
-};
-static constexpr Move no_move = Move(Colors::White, 0, 0);
-
-using MoveCount = uint16_t;
-constexpr MoveCount max_move_count = 1024;
-template<class T>
-using EachMove = std::array<T, max_move_count>;
-using MoveArray = EachMove<Move>;
+using MoveStr = std::string;
 
 using Ply = int8_t;
 constexpr Ply MaxPly = 127;
+
+#define EXCEPTIONS 1
+static void do_throw(const std::string&& message)
+{
+#if EXCEPTIONS
+    throw std::runtime_error(message);
+#else
+    cout << message << endl;
+    exit(1);
+#endif
+}
 
 #endif // !TYPES_H
