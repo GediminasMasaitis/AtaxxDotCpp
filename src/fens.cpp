@@ -22,11 +22,12 @@ Position Fens::parse(const Fen& fen)
     pos.Squares.fill(Pieces::Empty);
 
     File file = 0;
-    Rank rank = 0;
+    Rank flipped_rank = 0;
 
     stringstream ss(fen);
     while (true)
     {
+        const Rank rank = 6 - flipped_rank;
         char ch;
         ss.get(ch);
         const auto square = GetSquare(file, rank);
@@ -38,9 +39,9 @@ Position Fens::parse(const Fen& fen)
                 exit(-1);
             }
             file = 0;
-            rank++;
+            flipped_rank++;
         }
-        else if(ch == 'x')
+        else if(ch == 'o')
         {
             check_file(fen, file);
             pos.Bitboards[Pieces::White] |= GetBitboard(file, rank);
@@ -48,7 +49,7 @@ Position Fens::parse(const Fen& fen)
             file++;
 
         }
-        else if (ch == 'o')
+        else if (ch == 'x')
         {
             check_file(fen, file);
             pos.Bitboards[Pieces::Black] |= GetBitboard(file, rank);
@@ -70,7 +71,7 @@ Position Fens::parse(const Fen& fen)
         }
         else if(ch == ' ')
         {
-            if(rank != 6 || file != 7)
+            if(rank != 0 || file != 7)
             {
                 cout << "Malformed FEN " << fen << endl;
                 exit(-1);
@@ -81,11 +82,11 @@ Position Fens::parse(const Fen& fen)
 
     char pos_ch;
     ss.get(pos_ch);
-    if(pos_ch == 'x')
+    if(pos_ch == 'o')
     {
         pos.Turn = Colors::White;
     }
-    else if(pos_ch == 'o')
+    else if(pos_ch == 'x')
     {
         pos.Turn = Colors::Black;
     }
@@ -95,7 +96,7 @@ Position Fens::parse(const Fen& fen)
         exit(-1);
     }
 
-    pos.Bitboards[Pieces::Empty] = ~(Pieces::White | Pieces::Black | Pieces::Wall);
+    pos.Bitboards[Pieces::Empty] = ~(pos.Bitboards[Pieces::White] | pos.Bitboards[Pieces::Black] | pos.Bitboards[Pieces::Wall]) & available_position;
     return pos;
 }
 
@@ -103,8 +104,9 @@ Fen Fens::serialize(const Position& pos)
 {
     stringstream ss;
 
-    for(Rank rank = 0; rank < 7; rank++)
+    for(Rank flipped_rank = 0; flipped_rank < 7; flipped_rank++)
     {
+        const Rank rank = 6 - flipped_rank;
         File file = 0;
         while(file < 7)
         {
@@ -122,12 +124,12 @@ Fen Fens::serialize(const Position& pos)
             }
             else if(piece == Pieces::White)
             {
-                ss << string("x");
+                ss << string("o");
                 file++;
             }
             else if(piece == Pieces::Black)
             {
-                ss << string("o");
+                ss << string("x");
                 file++;
             }
             else if(piece == Pieces::Wall)
@@ -143,7 +145,7 @@ Fen Fens::serialize(const Position& pos)
     }
 
     ss << string(" ");
-    ss << string(pos.Turn == Colors::White ? "x" : "o");
+    ss << string(pos.Turn == Colors::White ? "o" : "x");
 
     const Fen fen = ss.str();
     return fen;

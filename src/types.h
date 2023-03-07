@@ -13,6 +13,7 @@ using Square = uint8_t;
 constexpr Square SquareCount = 64;
 template<class T>
 using EachSquare = std::array<T, SquareCount>;
+static constexpr Square no_square = 64;
 
 static constexpr Square GetFile(const Square square)
 {
@@ -62,6 +63,56 @@ static constexpr Bitboard GetBitboard(const File file, const Rank rank)
     return GetBitboard(GetSquare(file, rank));
 }
 
+static constexpr Bitboard available_position = 0x007F7F7F7F7F7F7FULL;
+
+static constexpr std::array<Bitboard, 8> Files =
+{
+    0x101010101010101ULL,
+    0x202020202020202ULL,
+    0x404040404040404ULL,
+    0x808080808080808ULL,
+    0x1010101010101010ULL,
+    0x2020202020202020ULL,
+    0x4040404040404040ULL,
+    0x8080808080808080ULL
+};
+
+static constexpr std::array<Bitboard, 8> Ranks =
+{
+    0xFFULL,
+    0xFF00ULL,
+    0xFF0000ULL,
+    0xFF000000ULL,
+    0xFF00000000ULL,
+    0xFF0000000000ULL,
+    0xFF000000000000ULL,
+    0xFF00000000000000ULL
+};
+
 using Fen = std::string;
+
+struct Move
+{
+    Color Turn;
+    Square From;
+    Square To;
+
+    constexpr Move(const Color turn, const Square from, const Square to)
+        : Turn(turn), From(from), To(to)
+    {
+    }
+
+    constexpr Move() : Move(Colors::White, 0, 0)
+    {
+        
+    }
+};
+static constexpr Move no_move = Move(Colors::White, 0, 0);
+
+using MoveCount = uint16_t;
+constexpr MoveCount MaxMoveCount = 1024;
+template<class T>
+using EachMove = std::array<T, MaxMoveCount>;
+using MoveArray = EachMove<Move>;
 
 #endif // !TYPES_H

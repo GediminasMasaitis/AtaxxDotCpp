@@ -7,6 +7,6 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package(Threads REQUIRED)
 
-add_executable(AtaxxDotCpp "main.cpp" "position.cpp" "fens.cpp")
+add_executable(AtaxxDotCpp "main.cpp" "position.cpp" "fens.cpp" "movegen.cpp")
 
 target_link_libraries(AtaxxDotCpp PRIVATE Threads::Threads)
