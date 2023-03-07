@@ -125,9 +125,9 @@ struct Move
 static constexpr Move no_move = Move(Colors::White, 0, 0);
 
 using MoveCount = uint16_t;
-constexpr MoveCount MaxMoveCount = 1024;
+constexpr MoveCount max_move_count = 1024;
 template<class T>
-using EachMove = std::array<T, MaxMoveCount>;
+using EachMove = std::array<T, max_move_count>;
 using MoveArray = EachMove<Move>;
 
 using Ply = int8_t;

@@ -8,7 +8,7 @@ using namespace std;
 
 int main()
 {
-    const Fen fen = "x5o/7/2-1-2/7/2-1-2/7/o5x x 0 1";
+    const Fen fen = "x5o/7/7/7/7/7/o5x x 0 1";
     const Position pos = Fens::parse(fen);
     cout << fen << endl;
     const Fen fen2 = Fens::serialize(pos);
@@ -18,6 +18,7 @@ int main()
     MoveCount move_count = 0;
     MoveGenerator::generate(pos, moves, move_count);
 
+    //Perft::perft_deepen(pos, 8);
     Perft::perft_suite();
 
     return 0;

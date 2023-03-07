@@ -2,6 +2,7 @@
 #include "attacks.h"
 
 #include <bit>
+#include <cassert>
 
 using namespace std;
 
@@ -34,9 +35,11 @@ void MoveGenerator::generate(const Position& pos, MoveArray& move_array, MoveCou
         }
     }
 
-    //if(move_index == 0)
-    //{
-    //    move_array[move_index] = no_move;
-    //    move_index++;
-    //}
+    if(move_index == 0 && pos.Bitboards[pos.Turn])
+    {
+        move_array[move_index] = no_move;
+        move_index++;
+    }
+
+    assert(move_index <= max_move_count);
 }
