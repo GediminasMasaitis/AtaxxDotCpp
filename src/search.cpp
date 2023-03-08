@@ -47,7 +47,7 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
             {
                 alpha = score;
 
-                if(score > beta)
+                if(score >= beta)
                 {
                     break;
                 }
