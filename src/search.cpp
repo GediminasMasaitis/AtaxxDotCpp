@@ -8,7 +8,7 @@
 using namespace std;
 
 
-Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Score alpha, const Score beta)
+Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Score alpha, const Score beta, const bool is_pv)
 {
     auto& ply_state = state.plies[ply];
 
@@ -24,6 +24,19 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
 
     TranspositionTableEntry tt_entry;
     const bool tt_entry_exists = state.table.get(pos.Key, tt_entry);
+    if (tt_entry_exists) {
+        if (ply > 0 && tt_entry.depth >= depth) {
+            if (tt_entry.flag == Upper && tt_entry.score <= alpha) {
+                return tt_entry.score;
+            }
+            if (tt_entry.flag == Lower && tt_entry.score >= beta) {
+                return tt_entry.score;
+            }
+            if (tt_entry.flag == Exact) {
+                return tt_entry.score;
+            }
+        }
+    }
 
     MoveArray moves;
     MoveCount move_count = 0;
@@ -34,6 +47,7 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
     Score best_score = -inf;
     Move best_move = no_move;
     TranspositionTableFlag flag = Upper;
+    int moves_evaluated = 0;
     for(MoveCount move_index = 0; move_index < move_count; ++move_index)
     {
         MoveOrder::order_next_move(moves, move_scores, move_count, move_index);
@@ -41,7 +55,20 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
         const auto& move = moves[move_index];
         Position new_pos = pos.make_move(move);
         state.nodes++;
-        const Score score = -alpha_beta(new_pos, static_cast<Ply>(depth - 1), static_cast<Ply>(ply + 1), -beta, -alpha);
+
+        Score score;
+        if(moves_evaluated > 0)
+        {
+            score = -alpha_beta(new_pos, static_cast<Ply>(depth - 1), static_cast<Ply>(ply + 1), -alpha - 1, -alpha, false);
+        }
+
+        if(moves_evaluated == 0 || (score > alpha && score < beta))
+        {
+            score = -alpha_beta(new_pos, static_cast<Ply>(depth - 1), static_cast<Ply>(ply + 1), -beta, -alpha, true);
+        }
+
+        moves_evaluated++;
+
         if(score > best_score)
         {
             best_score = score;
@@ -90,7 +117,7 @@ void Search::iteratively_deepen(const Position& pos)
     Move saved_move = no_move;
     for(int depth = 1; depth <= max_ply; ++depth)
     {
-        Score score = alpha_beta(pos, depth, 0, -inf, inf);
+        Score score = alpha_beta(pos, depth, 0, -inf, inf, true);
         if(state.timer.should_stop())
         {
             break;

@@ -10,7 +10,7 @@ class Search
 public:
     SearchState state;
 
-    Score alpha_beta(const Position& pos, Ply depth, Ply ply, Score alpha, Score bet);
+    Score alpha_beta(const Position& pos, Ply depth, Ply ply, Score alpha, Score bet, bool is_pv);
     void iteratively_deepen(const Position& pos);
     void run(const Position& pos, const SearchParameters& parameters);
 };

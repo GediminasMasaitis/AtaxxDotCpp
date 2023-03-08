@@ -36,7 +36,7 @@ inf +/- -nan
 
 ### 1.2
 
-Alpha-beta search
+Alpha-beta (AB) search
 
 ```
 info depth 1 time 1 score 1 nodes 16 nps 16000 pv f1
@@ -143,7 +143,7 @@ Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 1097 - 897 - 6  [0.550] 2000
 
 ### 1.6
 
-Transposition table for first move ordering
+Transposition table (TT) for first move ordering
 
 ```
 info depth 1 time 1 score 100 nodes 16 nps 16000 pv f1
@@ -160,10 +160,40 @@ info depth 11 time 37362 score 350 nodes 420440502 nps 11253158 pv f2 b1 e1 c2 a
 ```
 
 ```
+1+0.01:
 Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 16643 - 13136 - 221  [0.558] 30000
 40.80 +/- 3.94
 
 10+0.1:
 Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 604 - 391 - 5  [0.607] 1000
 75.15 +/- 21.98
+```
+
+### 1.7
+
+Principal variation search (PVS) and TT early returns
+
+```
+info depth 1 time 1 score 100 nodes 16 nps 16000 pv f1
+info depth 2 time 1 score 0 nodes 63 nps 63000 pv f1 b1
+info depth 3 time 1 score 100 nodes 531 nps 531000 pv f1 b1 e1
+info depth 4 time 1 score 0 nodes 1624 nps 1624000 pv f1 b1 f2 c1
+info depth 5 time 1 score 150 nodes 11300 nps 11300000 pv f1 a2 f2 b1 e2c1
+info depth 6 time 4 score -100 nodes 47862 nps 11965500 pv f1 b1 a6 c1 g2 c1e1
+info depth 7 time 23 score 300 nodes 295083 nps 12829695 pv f2 a2 e2 f6 d1 a2a4 d1b1
+info depth 8 time 96 score -200 nodes 903154 nps 9407854 pv f2 a2 e2 f6 d1 a1c1 d2 a2c2
+info depth 9 time 345 score 350 nodes 3888130 nps 11269942 pv f2 b1 e1 c2 d2 b1d1 e2 c1 d3
+info depth 10 time 1832 score -200 nodes 14485613 nps 7906993 pv f2 b1 g3 c1 f4 b2 f4f6 d2 e2 c1e1
+info depth 11 time 10776 score 350 nodes 104791337 nps 9724511 pv f2 b1 e1 c2 b6 f6 d2 b1d1 e2 c1 d3
+info depth 12 time 98852 score -250 nodes 678162522 nps 6860382 pv f2 b2 e1 c2 a6 f6 a5 d1 f2d2 c1 e2 d3
+```
+
+```
+1+0.01:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 2682 - 2291 - 27  [0.539] 5000
+27.23 +/- 9.62
+
+10+0.1:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 794 - 696 - 10  [0.533] 1500
+22.73 +/- 17.55
 ```
