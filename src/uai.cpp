@@ -27,6 +27,7 @@ void Uai::handle_uai()
 void Uai::handle_uainewgame()
 {
     current_pos = Fens::parse(initial_fen);
+    search.state.table.clear();
 }
 
 void Uai::handle_startpos(std::stringstream& reader)
@@ -197,6 +198,7 @@ void Uai::run()
 {
     current_pos = Fens::parse(initial_fen);
     search = Search();
+    search.state.table.set_size(1024 * 1024 * 32);
 
     while (true)
     {

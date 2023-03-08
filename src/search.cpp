@@ -22,14 +22,18 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
         return 0;
     }
 
+    TranspositionTableEntry tt_entry;
+    const bool tt_entry_exists = state.table.get(pos.Key, tt_entry);
+
     MoveArray moves;
     MoveCount move_count = 0;
     MoveGenerator::generate(pos, moves, move_count);
     MoveScoreArray move_scores;
-    MoveOrder::calculate_move_scores(pos, state, moves, move_scores, move_count);
+    MoveOrder::calculate_move_scores(pos, state, tt_entry.move, moves, move_scores, move_count);
     
     Score best_score = -inf;
     Move best_move = no_move;
+    TranspositionTableFlag flag = Upper;
     for(MoveCount move_index = 0; move_index < move_count; ++move_index)
     {
         MoveOrder::order_next_move(moves, move_scores, move_count, move_index);
@@ -49,8 +53,11 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
 
                 if(score >= beta)
                 {
+                    flag = Lower;
                     break;
                 }
+
+                flag = Exact;
 
                 // Save principal variation
                 PrincipalVariationData& this_ply_pv = ply_state.principal_variation;
@@ -72,6 +79,8 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
             }
         }
     }
+
+    state.table.set(pos.Key, flag, best_score, depth,  best_move);
 
     return best_score;
 }

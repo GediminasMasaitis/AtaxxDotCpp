@@ -6,6 +6,7 @@
 
 struct Position
 {
+    ZobristKey Key;
     Color Turn;
     EachSquare<Square> Squares;
     EachPiece<Bitboard> Bitboards;

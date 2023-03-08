@@ -130,8 +130,9 @@ using Score = int16_t;
 constexpr Score inf = 32000;
 
 using MoveScore = int64_t;
-
 using Time = int64_t;
+
+using ZobristKey = uint64_t;
 
 #define EXCEPTIONS 1
 static void do_throw(const std::string&& message)

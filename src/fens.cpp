@@ -1,5 +1,7 @@
 #include "fens.h"
 
+#include "zobrist.h"
+
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -93,6 +95,7 @@ Position Fens::parse(const Fen& fen)
     }
 
     pos.Bitboards[Pieces::Empty] = ~(pos.Bitboards[Pieces::White] | pos.Bitboards[Pieces::Black] | pos.Bitboards[Pieces::Wall]) & available_position;
+    pos.Key = Zobrist.get_key(pos.Turn, pos.Squares);
     return pos;
 }
 

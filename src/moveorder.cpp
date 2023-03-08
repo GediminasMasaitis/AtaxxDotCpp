@@ -1,13 +1,21 @@
 #include "moveorder.h"
 #include "attacks.h"
 
-void MoveOrder::calculate_move_scores(const Position& position, const SearchState& state, const MoveArray& moves, MoveScoreArray& move_scores, const MoveCount move_count)
+void MoveOrder::calculate_move_scores(const Position& position, const SearchState& state, const Move& tt_move, const MoveArray& moves, MoveScoreArray& move_scores, const MoveCount move_count)
 {
     for(int i = 0; i < move_count; i++)
     {
+        MoveScore move_score;
         const Move& move = moves[i];
-        const Bitboard captures = Attacks.near[move.To] & position.Bitboards[!position.Turn];
-        const MoveScore move_score = pop_count(captures);
+        if(move == tt_move)
+        {
+            move_score = 1LL << 60;
+        }
+        else
+        {
+            const Bitboard captures = Attacks.near[move.To] & position.Bitboards[!position.Turn];
+            move_score = pop_count(captures);
+        }
         move_scores[i] = move_score;
     }
 }
