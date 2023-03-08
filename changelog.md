@@ -62,7 +62,7 @@ Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 444 - 56 - 0  [0.888] 500
 
 ### 1.3
 
-Order by stones captured count
+Order moves by capture count
 
 ```
 info depth 1 time 1 score 1 nodes 16 nps 16000 pv f1
@@ -77,6 +77,37 @@ info depth 9 time 26437 score 4 nodes 500963864 nps 18949346 pv f2 b1 e1 c2 d2 b
 ```
 
 ```
+1+0.01:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 2826 - 2164 - 10  [0.566] 5000
+46.27 +/- 9.69
+
+10+0.1:
 Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 853 - 646 - 1  [0.569] 1500
 48.25 +/- 17.74
+```
+
+### 1.4
+
+Unattackable stone evaluation
+
+```
+info depth 1 time 1 score 100 nodes 16 nps 16000 pv f1
+info depth 2 time 1 score 0 nodes 138 nps 138000 pv f1 b1
+info depth 3 time 1 score 100 nodes 1540 nps 1540000 pv f1 b1 e1
+info depth 4 time 1 score 0 nodes 11662 nps 11662000 pv f1 b1 f2 c1
+info depth 5 time 2 score 150 nodes 60246 nps 30123000 pv f1 a2 f2 b1 g2
+info depth 6 time 25 score -100 nodes 488025 nps 19521000 pv f1 b1 g2 c1 g3 c1e1
+info depth 7 time 279 score 300 nodes 5363982 nps 19225741 pv f2 a2 e1 f6 d1 a2a4 d1b1
+info depth 8 time 3094 score -200 nodes 51459550 nps 16632045 pv f1 b1 e1 b2 f2 b1d1 f1d2 c1
+info depth 9 time 11453 score 350 nodes 190747232 nps 16654783 pv f2 b1 e1 c2 d2 b1d1 e2 c1 d3
+```
+
+```
+1+0.01:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 3419 - 1511 - 70  [0.691] 5000
+139.65 +/- 10.32
+
+10+0.1:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 327 - 168 - 5  [0.659] 500
+114.45 +/- 32.01
 ```
