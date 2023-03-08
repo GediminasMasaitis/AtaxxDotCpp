@@ -16,7 +16,7 @@ void MoveGenerator::generate(const Position& pos, MoveArray& move_array, MoveCou
     while(near)
     {
         const auto to = pop_lsb(near);
-        move_array[move_index] = Move(pos.Turn, 64, to);
+        move_array[move_index] = Move(pos.Turn, no_square, to);
         move_index++;
     }
 

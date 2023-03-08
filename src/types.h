@@ -15,7 +15,7 @@ using Square = uint8_t;
 constexpr Square SquareCount = 64;
 template<class T>
 using EachSquare = std::array<T, SquareCount>;
-static constexpr Square no_square = 64;
+static constexpr Square no_square = 63;
 
 static constexpr Square get_file(const Square square)
 {
@@ -129,7 +129,8 @@ using EachPly = std::array<T, max_ply>;
 using Score = int16_t;
 constexpr Score inf = 32000;
 
-using MoveScore = int32_t;
+using MoveScore = int64_t;
+
 using Time = int64_t;
 
 #define EXCEPTIONS 1

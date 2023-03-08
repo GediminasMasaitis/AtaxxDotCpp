@@ -31,5 +31,6 @@ constexpr MoveCount max_move_count = 1024;
 template<class T>
 using EachMove = std::array<T, max_move_count>;
 using MoveArray = EachMove<Move>;
+using MoveScoreArray = EachMove<MoveScore>;
 
 #endif // !MOVE_H

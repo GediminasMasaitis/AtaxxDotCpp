@@ -1,6 +1,7 @@
 #include "search.h"
 #include "evaluation.h"
 #include "movegen.h"
+#include "moveorder.h"
 
 #include <iostream>
 
@@ -24,11 +25,16 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
     MoveArray moves;
     MoveCount move_count = 0;
     MoveGenerator::generate(pos, moves, move_count);
+    MoveScoreArray move_scores;
+    MoveOrder::calculate_move_scores(pos, state, moves, move_scores, move_count);
+    
     Score best_score = -inf;
     Move best_move = no_move;
-    for(MoveCount i = 0; i < move_count; ++i)
+    for(MoveCount move_index = 0; move_index < move_count; ++move_index)
     {
-        const auto& move = moves[i];
+        MoveOrder::order_next_move(moves, move_scores, move_count, move_index);
+
+        const auto& move = moves[move_index];
         Position new_pos = pos.make_move(move);
         state.nodes++;
         const Score score = -alpha_beta(new_pos, static_cast<Ply>(depth - 1), static_cast<Ply>(ply + 1), -beta, -alpha);
@@ -46,6 +52,7 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
                     break;
                 }
 
+                // Save principal variation
                 PrincipalVariationData& this_ply_pv = ply_state.principal_variation;
                 this_ply_pv.moves[0] = best_move;
                 if (ply < max_ply - 1)
