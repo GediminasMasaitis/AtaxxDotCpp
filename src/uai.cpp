@@ -110,9 +110,42 @@ void Uai::handle_perft(stringstream& reader)
     Perft::perft_deepen(current_pos, depth);
 }
 
+static void read_search_parameters(std::stringstream& reader, SearchParameters& parameters)
+{
+    while (!reader.eof())
+    {
+        std::string word;
+        reader >> word;
+
+        if (word == "wtime")
+        {
+            reader >> parameters.white_time;
+        }
+        else if (word == "btime")
+        {
+            reader >> parameters.black_time;
+        }
+        else if (word == "winc")
+        {
+            reader >> parameters.white_increment;
+        }
+        else if (word == "binc")
+        {
+            reader >> parameters.black_increment;
+        }
+        else if (word == "infinite")
+        {
+            parameters.infinite = true;
+        }
+    }
+}
+
+
 void Uai::handle_go(std::stringstream& reader)
 {
-    search.run(current_pos);
+    SearchParameters parameters;
+    read_search_parameters(reader, parameters);
+    search.run(current_pos, parameters);
 }
 
 void Uai::handle_input(const std::string& command)
@@ -150,6 +183,12 @@ void Uai::handle_input(const std::string& command)
         else if (token == "quit" || token == "exit")
         {
             exit(0);
+        }
+
+        // Extensions
+        else if(token == "gi")
+        {
+            handle_input("go infinite");
         }
     }
 }

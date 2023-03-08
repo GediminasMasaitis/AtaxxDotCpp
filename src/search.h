@@ -3,18 +3,45 @@
 
 #include "types.h"
 #include "position.h"
+#include "timer.h"
 
-class SearchState
+struct SearchParameters
 {
-public:
-    
+    bool infinite = false;
+    Time white_time = 10000;
+    Time white_increment = 100;
+    Time black_time = 10000;
+    Time black_increment = 100;
+};
+
+struct PrincipalVariationData
+{
+    Ply length;
+    EachPly<Move> moves;
+};
+
+struct PlyState
+{
+    PrincipalVariationData principal_variation;
+};
+
+struct SearchState
+{
+    Timer timer;
+    SearchParameters parameters;
+    uint64_t nodes;
+
+    EachPly<PlyState> plies;
 };
 
 class Search
 {
 public:
     SearchState state;
-    void run(const Position& pos);
+
+    Score search(const Position& pos, const Ply depth, const Ply ply);
+    void iteratively_deepen(const Position& pos);
+    void run(const Position& pos, const SearchParameters parameters);
 };
 
 #endif // !SEARCH_H

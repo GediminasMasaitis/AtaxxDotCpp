@@ -87,6 +87,11 @@ static Square pop_lsb(Bitboard& bitboard)
     return square;
 }
 
+static constexpr uint8_t pop_count(const Bitboard bitboard)
+{
+    return static_cast<uint8_t>(std::popcount(bitboard));
+}
+
 static constexpr Bitboard available_position = 0x007F7F7F7F7F7F7FULL;
 
 static constexpr std::array<Bitboard, 8> Files =
@@ -117,10 +122,15 @@ using Fen = std::string;
 using MoveStr = std::string;
 
 using Ply = int8_t;
-constexpr Ply MaxPly = 127;
+constexpr Ply max_ply = 127;
+template<class T>
+using EachPly = std::array<T, max_ply>;
 
 using Score = int16_t;
+constexpr Score inf = 32000;
+
 using MoveScore = int32_t;
+using Time = int64_t;
 
 #define EXCEPTIONS 1
 static void do_throw(const std::string&& message)
