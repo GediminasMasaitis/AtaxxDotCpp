@@ -197,3 +197,13 @@ Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 2682 - 2291 - 27  [0.539] 5000
 Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 794 - 696 - 10  [0.533] 1500
 22.73 +/- 17.55
 ```
+
+### 1.8
+
+Prevent storing moves in TT when out of time
+
+```
+1+0.01:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 2543 - 2435 - 22  [0.511] 5000
+7.51 +/- 9.60
+```

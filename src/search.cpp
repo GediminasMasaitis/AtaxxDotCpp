@@ -107,7 +107,10 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
         }
     }
 
-    state.table.set(pos.Key, flag, best_score, depth,  best_move);
+    if(!state.timer.stopped)
+    {
+        state.table.set(pos.Key, flag, best_score, depth, best_move);
+    }
 
     return best_score;
 }
