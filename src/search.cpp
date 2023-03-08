@@ -7,7 +7,7 @@
 using namespace std;
 
 
-Score Search::search(const Position& pos, const Ply depth, const Ply ply)
+Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Score alpha, const Score beta)
 {
     auto& ply_state = state.plies[ply];
 
@@ -31,27 +31,37 @@ Score Search::search(const Position& pos, const Ply depth, const Ply ply)
         const auto& move = moves[i];
         Position new_pos = pos.make_move(move);
         state.nodes++;
-        const Score score = -search(new_pos, static_cast<Ply>(depth - 1), static_cast<Ply>(ply + 1));
+        const Score score = -alpha_beta(new_pos, static_cast<Ply>(depth - 1), static_cast<Ply>(ply + 1), -beta, -alpha);
         if(score > best_score)
         {
             best_score = score;
             best_move = move;
 
-            PrincipalVariationData& this_ply_pv = ply_state.principal_variation;
-            this_ply_pv.moves[0] = best_move;
-            if (ply < max_ply - 1)
+            if(score > alpha)
             {
-                PlyState& next_ply_state = state.plies[ply + 1];
-                PrincipalVariationData& next_ply_pv = next_ply_state.principal_variation;
-                this_ply_pv.length = static_cast<Ply>(1 + next_ply_pv.length);
-                for (Ply next_ply_index = 0; next_ply_index < next_ply_pv.length; next_ply_index++)
+                alpha = score;
+
+                if(score > beta)
                 {
-                    this_ply_pv.moves[next_ply_index + 1] = next_ply_pv.moves[next_ply_index];
+                    break;
                 }
-            }
-            else
-            {
-                this_ply_pv.length = 1;
+
+                PrincipalVariationData& this_ply_pv = ply_state.principal_variation;
+                this_ply_pv.moves[0] = best_move;
+                if (ply < max_ply - 1)
+                {
+                    PlyState& next_ply_state = state.plies[ply + 1];
+                    PrincipalVariationData& next_ply_pv = next_ply_state.principal_variation;
+                    this_ply_pv.length = static_cast<Ply>(1 + next_ply_pv.length);
+                    for (Ply next_ply_index = 0; next_ply_index < next_ply_pv.length; next_ply_index++)
+                    {
+                        this_ply_pv.moves[next_ply_index + 1] = next_ply_pv.moves[next_ply_index];
+                    }
+                }
+                else
+                {
+                    this_ply_pv.length = 1;
+                }
             }
         }
     }
@@ -64,7 +74,7 @@ void Search::iteratively_deepen(const Position& pos)
     Move saved_move = no_move;
     for(int depth = 1; depth <= max_ply; ++depth)
     {
-        Score score = search(pos, depth, 0);
+        Score score = alpha_beta(pos, depth, 0, -inf, inf);
         if(state.timer.should_stop())
         {
             break;
@@ -97,7 +107,7 @@ void Search::iteratively_deepen(const Position& pos)
     cout << "bestmove " << move_str << endl;
 }
 
-void Search::run(const Position& pos, const SearchParameters parameters)
+void Search::run(const Position& pos, const SearchParameters& parameters)
 {
     state.parameters = parameters;
     state.plies = {};
