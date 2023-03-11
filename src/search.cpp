@@ -102,6 +102,7 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
 
                 if(score >= beta)
                 {
+                    state.history[move.From][move.To] += depth * depth;
                     flag = Lower;
                     break;
                 }

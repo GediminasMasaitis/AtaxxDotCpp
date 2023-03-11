@@ -281,3 +281,17 @@ Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 2878 - 2000 - 122  [0.588] 5000
 Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 298 - 184 - 18  [0.614] 500
 80.63 +/- 30.73
 ```
+
+### 1.12
+
+History heuristic (HH) move ordering
+
+```
+1+0.01:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 2550 - 2296 - 154  [0.525] 5000
+17.66 +/- 9.48
+
+10+0.1:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 267 - 206 - 27  [0.561] 500
+42.60 +/- 29.86
+```

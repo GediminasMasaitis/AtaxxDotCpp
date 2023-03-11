@@ -81,6 +81,7 @@ struct SearchState
     SearchParameters parameters;
     uint64_t nodes;
     TranspositionTable table;
+    EachSquare<EachSquare<MoveScore>> history;
     EachPly<PlyState> plies;
 };
 
