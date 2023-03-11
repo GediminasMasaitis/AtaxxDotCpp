@@ -128,6 +128,7 @@ using EachPly = std::array<T, max_ply>;
 
 using Score = int16_t;
 constexpr Score inf = 32000;
+constexpr Score mate = 31000;
 
 using MoveScore = int64_t;
 using Time = int64_t;

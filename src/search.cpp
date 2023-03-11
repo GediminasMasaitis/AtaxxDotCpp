@@ -12,6 +12,23 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
 {
     auto& ply_state = state.plies[ply];
 
+    // WIN / LOSS / DRAW DETECTION
+    if(pos.Bitboards[Pieces::Empty] == 0)
+    {
+        const auto own_count = pop_count(pos.Bitboards[pos.Turn]);
+        const auto opp_count = pop_count(pos.Bitboards[!pos.Turn]);
+        if(own_count > opp_count)
+        {
+            return mate - ply;
+        }
+        if(own_count < opp_count)
+        {
+            return ply - mate;
+        }
+
+        return 0;
+    }
+
     // EARLY EXITS
     const Score static_eval = Evaluation::evaluate(pos);
     if(depth == 0 || ply == max_ply - 1 || depth > 2 && state.timer.should_stop())

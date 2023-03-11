@@ -267,3 +267,17 @@ Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 3676 - 2819 - 5  [0.566] 6500
 Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 548 - 450 - 2  [0.549] 1000
 34.16 +/- 21.61
 ```
+
+### 1.11
+
+Win / draw / loss (WDL) detection
+
+```
+1+0.01:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 2878 - 2000 - 122  [0.588] 5000
+61.65 +/- 9.65
+
+10+0.1:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 298 - 184 - 18  [0.614] 500
+80.63 +/- 30.73
+```
