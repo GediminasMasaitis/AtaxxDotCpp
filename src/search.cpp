@@ -128,6 +128,11 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
                 }
             }
         }
+
+        if(moves_evaluated > 4 + 4 * depth * depth)
+        {
+            break;
+        }
     }
 
     // STORE TRANSPOSITION TABLE

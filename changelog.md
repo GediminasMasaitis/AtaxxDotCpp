@@ -313,3 +313,35 @@ Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 2550 - 2296 - 154  [0.525] 5000
 Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 267 - 206 - 27  [0.561] 500
 42.60 +/- 29.86
 ```
+
+### 1.13
+
+Late move pruning (LMP)
+
+```
+info depth 1 time 1 score 100 nodes 9 nps 9000 pv f1
+info depth 2 time 1 score 0 nodes 49 nps 49000 pv f1 b1
+info depth 3 time 1 score 100 nodes 255 nps 255000 pv f1 b1 e1
+info depth 4 time 1 score 0 nodes 1035 nps 1035000 pv f1 b1 g2 c1
+info depth 5 time 1 score 150 nodes 4968 nps 4968000 pv f1 g6 f2 b1 g2
+info depth 6 time 4 score -100 nodes 31607 nps 7901750 pv f1 b1 g2 c1 g3 c1e2
+info depth 7 time 18 score 200 nodes 123542 nps 6863444 pv f1 g6 g2 b1 a6 d2f1 b6
+info depth 8 time 50 score -100 nodes 312878 nps 6257560 pv f1 g6 a6 f6 g2 f5 e1 f5f3
+info depth 9 time 142 score 350 nodes 825764 nps 5815239 pv f2 b1 e3 c1 d2 c2 f2d1 b2 c3
+info depth 10 time 661 score -200 nodes 3608508 nps 5459164 pv b6 f6 c5 b2 f1 c1 a6 b2d4 b6d5 e5
+info depth 11 time 976 score 400 nodes 5258212 nps 5387512 pv b6 f6 c5 b2 d5 f6e4 d4 g7e5 c4 e5c6 b5
+info depth 12 time 2740 score -250 nodes 13603047 nps 4964615 pv b6 b2 c5 b3 f2 c4 b6b4 c3 b5 d4 f2d3 d5
+info depth 13 time 7129 score 400 nodes 34039378 nps 4774775 pv f2 b2 e2 c2 b6 d3 f2d2 b2d3 d1c3 e3 f2 d2f1 e3g2
+info depth 14 time 36510 score -250 nodes 168354430 nps 4611186 pv b6 b2 b5 b3 f2 c4 b6b4 c3 c5 a4 c4a2 b5a3 b1 c2
+info depth 15 time 53719 score 400 nodes 249043047 nps 4636032 pv b6 b2 c5 b3 c4 b2b4 b5 b3a5 a6 a4 b3 c6 b7 a1a3 c3
+```
+
+```
+1+0.01:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 2793 - 2042 - 165  [0.575] 5000
+52.58 +/- 9.56
+
+10+0.1:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 263 - 218 - 19  [0.545] 500
+31.35 +/- 30.02
+```
