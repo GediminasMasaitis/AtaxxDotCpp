@@ -12,17 +12,11 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
 {
     auto& ply_state = state.plies[ply];
 
-    // EVALUATION
+    // EARLY EXITS
     const Score static_eval = Evaluation::evaluate(pos);
-    if(depth == 0 || ply == max_ply - 1)
+    if(depth == 0 || ply == max_ply - 1 || depth > 2 && state.timer.should_stop())
     {
         return static_eval;
-    }
-
-    // TIME MANAGEMENT
-    if(depth > 2 && state.timer.should_stop())
-    {
-        return 0;
     }
 
     // TRANSPOSITION TABLE PROBING
@@ -70,11 +64,12 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
         Score score;
         if(moves_evaluated > 0)
         {
-            score = -alpha_beta(new_pos, static_cast<Ply>(depth - 1), static_cast<Ply>(ply + 1), -alpha - 1, -alpha, false);
+            auto reduction = moves_evaluated > 8 && depth > 4 ? 2 : 0;
+            score = -alpha_beta(new_pos, depth - 1 - reduction, ply + 1, -alpha - 1, -alpha, false);
         }
         if(moves_evaluated == 0 || (score > alpha && score < beta))
         {
-            score = -alpha_beta(new_pos, static_cast<Ply>(depth - 1), static_cast<Ply>(ply + 1), -beta, -alpha, true);
+            score = -alpha_beta(new_pos, depth - 1, ply + 1, -beta, -alpha, true);
         }
 
         moves_evaluated++;
