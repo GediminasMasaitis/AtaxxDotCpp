@@ -287,6 +287,24 @@ Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 298 - 184 - 18  [0.614] 500
 History heuristic (HH) move ordering
 
 ```
+info depth 1 time 1 score 100 nodes 16 nps 16000 pv f1
+info depth 2 time 1 score 0 nodes 63 nps 63000 pv f1 b1
+info depth 3 time 1 score 100 nodes 531 nps 531000 pv f1 b1 e1
+info depth 4 time 1 score 0 nodes 1626 nps 1626000 pv f1 b1 g2 c1
+info depth 5 time 1 score 150 nodes 8807 nps 8807000 pv f1 g6 f2 b1 g2
+info depth 6 time 5 score -100 nodes 48543 nps 9708600 pv f1 b1 g2 c1 b6 c1e2
+info depth 7 time 16 score 200 nodes 165904 nps 10369000 pv f1 f7 f2 b1 e1 f6 e1c2
+info depth 8 time 48 score -100 nodes 391674 nps 8159875 pv f1 f7 b6 g7e5 f2 d6 f2f4 f7f5
+info depth 9 time 154 score 300 nodes 1282743 nps 8329500 pv f1 f7 b6 b1 e1 e7 d2 b1c3 e1c2
+info depth 10 time 653 score -200 nodes 4463461 nps 6835315 pv f2 f7 e1 b2 b6 e7 g2 c1 e1g3 c1e2
+info depth 11 time 1360 score 350 nodes 9063896 nps 6664629 pv f2 b1 e2 c2 d3 b1d2 e3 c3 d1 c3e1 f1
+info depth 12 time 3648 score -200 nodes 21853436 nps 5990525 pv f2 b1 e2 f6 d2 c1 e2c2 b2 d1 c3 f2d3 b3
+info depth 13 time 7287 score 350 nodes 43168222 nps 5924004 pv f2 b2 e3 c2 d3 b2d2 e2 c3 d1 d3f1 c2e1 g2 f3
+info depth 14 time 25601 score -200 nodes 134722981 nps 5262410 pv f2 b2 g3 c2 f4 g7e5 f2e4 b2d3 d4 c2e3 f3 d4f2 e4g2 e4
+info depth 15 time 47023 score 400 nodes 264711184 nps 5629398 pv f2 f6 e3 e5 f4 f6e4 f3 e5g3 g2 g4 f5 e2 f1 g7g5 e5
+```
+
+```
 1+0.01:
 Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 2550 - 2296 - 154  [0.525] 5000
 17.66 +/- 9.48
