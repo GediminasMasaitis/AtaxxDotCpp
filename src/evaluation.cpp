@@ -27,6 +27,10 @@ Score evaluate_color(const Position& pos, Color color)
 Score Evaluation::evaluate(const Position& pos)
 {
     Score score = 0;
+
+    // TEMPO
+    score += 400;
+    
     score += evaluate_color(pos, pos.Turn);
     score -= evaluate_color(pos, !pos.Turn);
     return score;
