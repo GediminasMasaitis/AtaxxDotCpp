@@ -207,3 +207,32 @@ Prevent storing moves in TT when out of time
 Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 2543 - 2435 - 22  [0.511] 5000
 7.51 +/- 9.60
 ```
+
+### 1.9
+
+Reverse futility pruning (RFP)
+
+```
+info depth 1 time 1 score 100 nodes 16 nps 16000 pv f1
+info depth 2 time 1 score 0 nodes 63 nps 63000 pv f1 b1
+info depth 3 time 1 score 100 nodes 531 nps 531000 pv f1 b1 e1
+info depth 4 time 1 score 0 nodes 1624 nps 1624000 pv f1 b1 f2 c1
+info depth 5 time 1 score 150 nodes 11300 nps 11300000 pv f1 a2 f2 b1 e2c1
+info depth 6 time 4 score -100 nodes 48253 nps 12063250 pv f1 b1 g2 c2 g3 c2e1
+info depth 7 time 20 score 300 nodes 226185 nps 11309250 pv f2 a2 e2 f6 d2 a2a4 d2b1
+info depth 8 time 89 score -200 nodes 772162 nps 8675977 pv f2 a2 e2 f6 d2 a1c1 d1 a2c2
+info depth 9 time 246 score 350 nodes 2091402 nps 8501634 pv f2 b1 e1 c2 d2 b1d1 e2 c1 d3
+info depth 10 time 1375 score -200 nodes 9628944 nps 7002868 pv f2 b1 g3 c1 f4 a2 f4f6 d1 f2d2 c2
+info depth 11 time 6407 score 350 nodes 44637495 nps 6966988 pv f2 b1 e1 c2 a6 f6 d2 b1d1 e2 c1 d3
+info depth 12 time 62129 score -250 nodes 363484334 nps 5850477 pv f2 b2 e1 c2 a6 f6 a5 d1 f2d2 c1 e2 d3
+```
+
+```
+1+0.01:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 3097 - 1879 - 24  [0.622] 5000
+86.37 +/- 9.89
+
+10+0.1:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 326 - 172 - 2  [0.654] 500
+110.60 +/- 32.01
+```

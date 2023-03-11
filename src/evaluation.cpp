@@ -5,13 +5,17 @@ Score evaluate_color(const Position& pos, Color color)
 {
     Score score = 0;
     auto pieces = pos.Bitboards[color];
+
     while (pieces)
     {
         const auto sq = pop_lsb(pieces);
 
+        // MATERIAL
         score += 100;
 
-        if(!(Attacks.near[sq] & pos.Bitboards[Pieces::Empty]))
+        // UNATTACKABLE
+        const Bitboard empty_near_sq = Attacks.near[sq] & pos.Bitboards[Pieces::Empty];
+        if(!empty_near_sq)
         {
             score += 50;
         }

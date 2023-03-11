@@ -12,16 +12,20 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
 {
     auto& ply_state = state.plies[ply];
 
+    // EVALUATION
+    const Score static_eval = Evaluation::evaluate(pos);
     if(depth == 0 || ply == max_ply - 1)
     {
-        return Evaluation::evaluate(pos);
+        return static_eval;
     }
 
+    // TIME MANAGEMENT
     if(depth > 2 && state.timer.should_stop())
     {
         return 0;
     }
 
+    // TRANSPOSITION TABLE PROBING
     TranspositionTableEntry tt_entry;
     const bool tt_entry_exists = state.table.get(pos.Key, tt_entry);
     if (tt_entry_exists) {
@@ -36,6 +40,12 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
                 return tt_entry.score;
             }
         }
+    }
+
+    // REVERSE FUTILITY PRUNING
+    if(!is_pv && depth < 7 && static_eval - 150 * depth > beta)
+    {
+        return beta;
     }
 
     MoveArray moves;
@@ -56,12 +66,12 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
         Position new_pos = pos.make_move(move);
         state.nodes++;
 
+        // PRINCIPAL VARIATION SEARCH
         Score score;
         if(moves_evaluated > 0)
         {
             score = -alpha_beta(new_pos, static_cast<Ply>(depth - 1), static_cast<Ply>(ply + 1), -alpha - 1, -alpha, false);
         }
-
         if(moves_evaluated == 0 || (score > alpha && score < beta))
         {
             score = -alpha_beta(new_pos, static_cast<Ply>(depth - 1), static_cast<Ply>(ply + 1), -beta, -alpha, true);
@@ -86,7 +96,7 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
 
                 flag = Exact;
 
-                // Save principal variation
+                // SAVE PRINCIPAL VARIATION
                 PrincipalVariationData& this_ply_pv = ply_state.principal_variation;
                 this_ply_pv.moves[0] = best_move;
                 if (ply < max_ply - 1)
@@ -107,6 +117,7 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
         }
     }
 
+    // STORE TRANSPOSITION TABLE
     if(!state.timer.stopped)
     {
         state.table.set(pos.Key, flag, best_score, depth, best_move);
