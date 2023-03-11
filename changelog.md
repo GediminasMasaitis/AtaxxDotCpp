@@ -395,3 +395,8 @@ Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 3418 - 1433 - 149  [0.698] 5000
 Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 328 - 151 - 21  [0.677] 500
 128.55 +/- 31.85
 ```
+
+```
+Score of AtaxxDotCpp-dev vs Tiktaxx-tryhard: 1623 - 3033 - 94  [0.352] 4750
+-106.33 +/- 10.22
+```
