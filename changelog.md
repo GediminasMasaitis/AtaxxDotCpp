@@ -400,3 +400,17 @@ Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 328 - 151 - 21  [0.677] 500
 Score of AtaxxDotCpp-dev vs Tiktaxx-tryhard: 1623 - 3033 - 94  [0.352] 4750
 -106.33 +/- 10.22
 ```
+
+### 1.15
+
+Min/max time management (TM)
+
+```
+1+0.01:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 3045 - 1832 - 123  [0.621] 5000
+86.00 +/- 9.79
+
+10+0.1:
+Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 294 - 194 - 12  [0.600] 500
+70.44 +/- 30.74
+```

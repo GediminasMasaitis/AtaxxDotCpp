@@ -9,6 +9,13 @@
 #include <stdexcept>
 #include <string>
 
+#define DATAGEN 0
+#if DATAGEN
+constexpr bool do_datagen = true;
+#else
+constexpr bool do_datagen = false;
+#endif
+
 using Rank = uint8_t;
 using File = uint8_t;
 using Square = uint8_t;
@@ -119,6 +126,8 @@ static constexpr std::array<Bitboard, 8> Ranks =
 };
 
 using Fen = std::string;
+static const Fen initial_fen = "x5o/7/7/7/7/7/o5x x 0 1";
+
 using MoveStr = std::string;
 
 using Ply = int8_t;

@@ -12,7 +12,8 @@ void Timer::init(const bool infinite, const Time base, const Time increment)
     this->infinite = infinite;
 
     start_time = high_resolution_clock::now();
-    allocated_time = base / 30;
+    allocated_time_min = base / 40;
+    allocated_time_max = base / 5;
 }
 
 Time Timer::elapsed() const
@@ -21,7 +22,23 @@ Time Timer::elapsed() const
     return duration_cast<milliseconds>(now - start_time).count();
 }
 
-bool Timer::should_stop()
+bool Timer::should_stop_min()
+{
+    if (infinite)
+    {
+        return false;
+    }
+
+    const auto elapsed_time = elapsed();
+    if (stopped || elapsed_time >= allocated_time_min)
+    {
+        stopped = true;
+        return true;
+    }
+    return false;
+}
+
+bool Timer::should_stop_max()
 {
     if(infinite)
     {
@@ -29,7 +46,7 @@ bool Timer::should_stop()
     }
 
     const auto elapsed_time = elapsed();
-    if(stopped || elapsed_time >= allocated_time)
+    if(stopped || elapsed_time >= allocated_time_max)
     {
         stopped = true;
         return true;

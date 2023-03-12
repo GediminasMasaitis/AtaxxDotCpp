@@ -31,7 +31,7 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
 
     // EARLY EXITS
     const Score static_eval = Evaluation::evaluate(pos);
-    if(depth == 0 || ply == max_ply - 1 || depth > 2 && state.timer.should_stop())
+    if(depth == 0 || ply == max_ply - 1 || depth > 2 && state.timer.should_stop_max())
     {
         return static_eval;
     }
@@ -151,7 +151,7 @@ void Search::iteratively_deepen(const Position& pos)
     for(int depth = 1; depth <= max_ply; ++depth)
     {
         Score score = alpha_beta(pos, depth, 0, -inf, inf, true);
-        if(state.timer.should_stop())
+        if(state.timer.stopped)
         {
             break;
         }
@@ -177,6 +177,11 @@ void Search::iteratively_deepen(const Position& pos)
             cout << pv_move.to_move_str() << " ";
         }
         cout << endl;
+
+        if (state.timer.should_stop_min())
+        {
+            break;
+        }
     }
 
     const auto move_str = saved_move.to_move_str();

@@ -1,4 +1,6 @@
 #include "uai.h"
+
+#include "datagen.h"
 #include "fens.h"
 #include "position.h"
 #include "perft.h"
@@ -7,8 +9,6 @@
 #include <sstream>
 
 using namespace std;
-
-static const std::string initial_fen = "x5o/7/7/7/7/7/o5x x 0 1";
 
 static string get_uci_line()
 {
@@ -190,6 +190,10 @@ void Uai::handle_input(const std::string& command)
         else if(token == "gi")
         {
             handle_input("go infinite");
+        }
+        else if(token == "datagen")
+        {
+            Datagen::run();
         }
     }
 }
