@@ -62,6 +62,8 @@ struct SearchParameters
     Time white_increment = 100;
     Time black_time = 10000;
     Time black_increment = 100;
+    NodeCount nodes_min = 0;
+    NodeCount nodes_max = 0;
 };
 
 struct PrincipalVariationData
@@ -77,6 +79,7 @@ struct PlyState
 
 struct SearchState
 {
+    PrincipalVariationData saved_pv;
     Timer timer;
     SearchParameters parameters;
     uint64_t nodes;

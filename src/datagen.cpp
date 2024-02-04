@@ -1,5 +1,6 @@
 #include "datagen.h"
 
+#include "display.h"
 #include "fens.h"
 #include "search.h"
 
@@ -11,7 +12,15 @@ void run_iteration(Search& search)
 {
     Position pos = Fens::parse(initial_fen);
     SearchParameters parameters;
-    search.run(pos, parameters);
+    parameters.nodes_min = 10000;
+    parameters.nodes_max = 10000;
+    while(true)
+    {
+        Display::display_position(pos);
+        search.run(pos, parameters);
+        const Move best_move = search.state.saved_pv.moves[0];
+        pos = pos.make_move(best_move);
+    }
 }
 
 static void run_thread()

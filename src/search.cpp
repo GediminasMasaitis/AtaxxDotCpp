@@ -7,6 +7,7 @@
 
 using namespace std;
 
+constexpr bool print_info = !do_datagen;
 
 Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Score alpha, const Score beta, const bool is_pv)
 {
@@ -31,7 +32,7 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
 
     // EARLY EXITS
     const Score static_eval = Evaluation::evaluate(pos);
-    if(depth == 0 || ply == max_ply - 1 || depth > 2 && state.timer.should_stop_max())
+    if(depth == 0 || ply == max_ply - 1 || depth > 2 && state.timer.should_stop_max(state.nodes))
     {
         return static_eval;
     }
@@ -147,7 +148,6 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
 
 void Search::iteratively_deepen(const Position& pos)
 {
-    Move saved_move = no_move;
     for(int depth = 1; depth <= max_ply; ++depth)
     {
         Score score = alpha_beta(pos, depth, 0, -inf, inf, true);
@@ -156,7 +156,7 @@ void Search::iteratively_deepen(const Position& pos)
             break;
         }
 
-        saved_move = state.plies[0].principal_variation.moves[0];
+        state.saved_pv = state.plies[0].principal_variation;
 
         Time elapsed = state.timer.elapsed();
         if(elapsed == 0)
@@ -164,28 +164,34 @@ void Search::iteratively_deepen(const Position& pos)
             elapsed = 1;
         }
 
-        cout << "info";
-        cout << " depth " << depth;
-        cout << " time " << elapsed;
-        cout << " score " << score;
-        cout << " nodes " << state.nodes;
-        cout << " nps " << state.nodes * 1000 / elapsed;
-        cout << " pv ";
-        for(int i = 0; i < state.plies[0].principal_variation.length; ++i)
+        if constexpr (print_info)
         {
-            const Move& pv_move = state.plies[0].principal_variation.moves[i];
-            cout << pv_move.to_move_str() << " ";
+            cout << "info";
+            cout << " depth " << depth;
+            cout << " time " << elapsed;
+            cout << " score " << score;
+            cout << " nodes " << state.nodes;
+            cout << " nps " << state.nodes * 1000 / elapsed;
+            cout << " pv ";
+            for (int i = 0; i < state.plies[0].principal_variation.length; ++i)
+            {
+                const Move& pv_move = state.plies[0].principal_variation.moves[i];
+                cout << pv_move.to_move_str() << " ";
+            }
+            cout << endl;
         }
-        cout << endl;
 
-        if (state.timer.should_stop_min())
+        if (state.timer.should_stop_min(state.nodes))
         {
             break;
         }
     }
 
-    const auto move_str = saved_move.to_move_str();
-    cout << "bestmove " << move_str << endl;
+    if constexpr (print_info)
+    {
+        const auto move_str = state.saved_pv.moves[0].to_move_str();
+        cout << "bestmove " << move_str << endl;
+    }
 }
 
 void Search::run(const Position& pos, const SearchParameters& parameters)
@@ -195,6 +201,6 @@ void Search::run(const Position& pos, const SearchParameters& parameters)
     state.nodes = 0;
     const Time time = pos.Turn == Colors::White ? state.parameters.white_time : state.parameters.black_time;
     const Time increment = pos.Turn == Colors::White ? state.parameters.white_increment : state.parameters.black_increment;
-    state.timer.init(parameters.infinite, time, increment);
+    state.timer.init(parameters.infinite, parameters.nodes_min, parameters.nodes_max, time, increment);
     iteratively_deepen(pos);
 }

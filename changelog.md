@@ -414,3 +414,7 @@ Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 3045 - 1832 - 123  [0.621] 5000
 Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 294 - 194 - 12  [0.600] 500
 70.44 +/- 30.74
 ```
+
+### 1.15.1
+
+Added board display, node-limited search

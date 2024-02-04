@@ -1,6 +1,7 @@
 #include "uai.h"
 
 #include "datagen.h"
+#include "display.h"
 #include "fens.h"
 #include "position.h"
 #include "perft.h"
@@ -134,6 +135,13 @@ static void read_search_parameters(std::stringstream& reader, SearchParameters& 
         {
             reader >> parameters.black_increment;
         }
+        else if (word == "nodes")
+        {
+            NodeCount nodes;
+            reader >> nodes;
+            parameters.nodes_min = nodes;
+            parameters.nodes_max = nodes;
+        }
         else if (word == "infinite")
         {
             parameters.infinite = true;
@@ -187,6 +195,10 @@ void Uai::handle_input(const std::string& command)
         }
 
         // Extensions
+        else if (token == "d" || token == "display")
+        {
+            Display::display_position(current_pos);
+        }
         else if(token == "gi")
         {
             handle_input("go infinite");

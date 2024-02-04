@@ -11,13 +11,16 @@ class Timer
     Time allocated_time_min;
     Time allocated_time_max;
 
+    NodeCount nodes_min;
+    NodeCount nodes_max;
+
 public:
     bool stopped;
 
-    void init(const bool infinite, const Time base, const Time increment);
+    void init(bool infinite, NodeCount nodes_min, NodeCount nodes_max, Time base, Time increment);
     Time elapsed() const;
-    bool should_stop_min();
-    bool should_stop_max();
+    bool should_stop_min(NodeCount nodes);
+    bool should_stop_max(NodeCount nodes);
 };
 
 #endif // !TIMER_H
