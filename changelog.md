@@ -415,6 +415,65 @@ Score of AtaxxDotCpp-dev vs AtaxxDotCpp-master: 294 - 194 - 12  [0.600] 500
 70.44 +/- 30.74
 ```
 
+```
+1+0.01:
+Score of AtaxxDotCpp-1.15.1 vs Tiktaxx-tryhard: 2153 - 2745 - 102  [0.441] 5000
+-41.33 +/- 9.59
+```
+
 ### 1.15.1
 
 Added board display, node-limited search
+
+
+### 1.16.1
+
+Added loss by no pieces detection
+
+```
++---+---+---+---+---+---+---+
+| x |   |   |   |   |   | o | 7
++---+---+---+---+---+---+---+
+|   |   |   |   |   |   |   | 6
++---+---+---+---+---+---+---+
+|   |   |   |   |   |   |   | 5
++---+---+---+---+---+---+---+
+|   |   |   |   |   |   |   | 4
++---+---+---+---+---+---+---+
+|   |   |   |   |   |   |   | 3
++---+---+---+---+---+---+---+
+|   |   |   |   |   |   |   | 2
++---+---+---+---+---+---+---+
+| o |   |   |   |   |   | x | 1
++---+---+---+---+---+---+---+
+  A   B   C   D   E   F   G
+
+Turn: x
+FEN: x5o/7/7/7/7/7/o5x x
+Eval: 400
+```
+
+```
+info depth 1 time 1 score -300 nodes 9 nps 9000 pv f1
+info depth 2 time 1 score 400 nodes 34 nps 34000 pv f1 b1
+info depth 3 time 1 score -300 nodes 225 nps 225000 pv f1 b1 e1
+info depth 4 time 1 score 300 nodes 434 nps 434000 pv f1 b1 e1 b1d1
+info depth 5 time 1 score -100 nodes 3166 nps 3166000 pv g1e3 b1 f3 b1d3 e2
+info depth 6 time 1 score 100 nodes 10129 nps 10129000 pv f2 b1 e2 c1 e2c2 b2
+info depth 7 time 3 score 0 nodes 19828 nps 6609333 pv f2 b1 e2 c1 d2 b1d1 e1
+info depth 8 time 8 score 100 nodes 54589 nps 6823625 pv f2 b1 e2 f6 f3 c1 d2 b1d1
+info depth 9 time 29 score 0 nodes 201427 nps 6945758 pv f2 b1 e2 f6 f3 c1 d2 b1d1 e1
+info depth 10 time 75 score 100 nodes 491185 nps 6549133 pv f2 b1 e2 f6 f3 c1 d2 b1d1 f3e1 c1e3
+info depth 11 time 256 score 0 nodes 1628242 nps 6360320 pv f2 b1 e2 f6 b6 a2 f3 f7 d2 c1 e2c2
+info depth 12 time 532 score 100 nodes 3223727 nps 6059637 pv f2 b1 e2 c1 b6 f6 e3 a2 e3d1 b1d2 e1 e1
+info depth 13 time 1579 score 0 nodes 9025918 nps 5716224 pv f2 b1 e1 c1 b7 a2 c6 b3 d2 b1d1 e2 c1e3 g1f3
+info depth 14 time 2978 score 100 nodes 16905670 nps 5676853 pv f2 b1 e2 c2 b6 a2 d2 b1d1 f2d3 d1e3 c3 d1 g1e1 c1
+info depth 15 time 9776 score 0 nodes 56404657 nps 5769707 pv f2 b2 e2 c2 d3 b2d2 e3 c3 d1 d3e1 e3f1 d3 e3 d1f3 d2b2
+info depth 16 time 20157 score 100 nodes 113292568 nps 5620507 pv f2 b2 e2 c2 d1 b2d2 f2d3 a1c3 e2c1 e2 c2e3 c2 e2d4 c2e4 c2 e2
+```
+
+```
+1+0.01
+Score of AtaxxDotCpp-1.16 vs AtaxxDotCpp-1.15.1: 4848 - 4935 - 217  [0.496] 10000
+-3.02 +/- 6.73
+```

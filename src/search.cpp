@@ -13,18 +13,24 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
 {
     auto& ply_state = state.plies[ply];
 
-    // WIN / LOSS / DRAW DETECTION
+    // LOSS BY NO PIECES
+    if(pos.Bitboards[pos.Turn] == 0)
+    {
+        return static_cast<Score>(ply - mate);
+    }
+
+    // WIN / LOSS / DRAW BY MAJORITY
     if(pos.Bitboards[Pieces::Empty] == 0)
     {
         const auto own_count = pop_count(pos.Bitboards[pos.Turn]);
         const auto opp_count = pop_count(pos.Bitboards[!pos.Turn]);
         if(own_count > opp_count)
         {
-            return mate - ply;
+            return static_cast<Score>(mate - ply);
         }
         if(own_count < opp_count)
         {
-            return ply - mate;
+            return static_cast<Score>(ply - mate);
         }
 
         return 0;
