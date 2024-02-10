@@ -6,7 +6,7 @@
 
 struct MoveGenerator
 {
-    static void generate(const Position& pos, MoveArray& move_array, MoveCount& move_index);
+    static void generate(const PositionBase& pos, MoveArray& move_array, MoveCount& move_index);
 };
 
 #endif // !MOVEGEN_H

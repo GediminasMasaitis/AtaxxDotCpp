@@ -9,8 +9,8 @@
 
 struct Perft
 {
-    static uint64_t perft(const Position& pos, const Ply depth);
-    static void perft_deepen(const Position& pos, const Ply depth, std::vector<uint64_t>* verfication = nullptr);
+    static uint64_t perft(PositionBase& pos, const Ply depth);
+    static void perft_deepen(PositionBase& pos, const Ply depth, std::vector<uint64_t>* verfication = nullptr);
     static void perft_deepen(const Fen& fen, const Ply depth, std::vector<uint64_t>* verfication = nullptr);
     static void perft_suite();
 };

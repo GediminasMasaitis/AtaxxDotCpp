@@ -54,7 +54,7 @@ void run_iteration(Search& search)
         const DatagenResult datagen_result = DatagenResult{ pos, 0, search_result.score };
         results.push_back(datagen_result);
         const Move best_move = search.state.saved_pv.moves[0];
-        pos = pos.make_move(best_move);
+        pos.make_move_in_place(best_move);
     }
     Display::display_position(pos);
     for(DatagenResult& result : results)

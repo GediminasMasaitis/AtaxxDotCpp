@@ -6,7 +6,7 @@
 
 struct Evaluation
 {
-    static Score evaluate(const Position& pos);
+    static Score evaluate(const PositionBase& pos);
 };
 
 #endif // !EVALUATION_H

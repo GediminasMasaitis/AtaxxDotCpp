@@ -1,15 +1,18 @@
 #include "search.h"
+
+#include "display.h"
 #include "evaluation.h"
 #include "movegen.h"
 #include "moveorder.h"
 
 #include <iostream>
 
+
 using namespace std;
 
 constexpr bool print_info = !do_datagen;
 
-Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Score alpha, const Score beta, const bool is_pv)
+Score Search::alpha_beta(PositionBase& pos, const Ply depth, const Ply ply, Score alpha, const Score beta, const bool is_pv)
 {
     auto& ply_state = state.plies[ply];
 
@@ -81,7 +84,7 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
         MoveOrder::order_next_move(moves, move_scores, move_count, move_index);
 
         const auto& move = moves[move_index];
-        Position new_pos = pos.make_move(move);
+        auto npos = pos.make_move_copy(move);
         state.nodes++;
 
         // PRINCIPAL VARIATION SEARCH
@@ -89,14 +92,14 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
         if(moves_evaluated > 0)
         {
             auto reduction = moves_evaluated > 8 && depth > 4 ? 2 : 0;
-            score = -alpha_beta(new_pos, depth - 1 - reduction, ply + 1, -alpha - 1, -alpha, false);
+            score = -alpha_beta(npos, depth - 1 - reduction, ply + 1, -alpha - 1, -alpha, false);
         }
         if(moves_evaluated == 0 || (score > alpha && score < beta))
         {
-            score = -alpha_beta(new_pos, depth - 1, ply + 1, -beta, -alpha, true);
+            score = -alpha_beta(npos, depth - 1, ply + 1, -beta, -alpha, true);
         }
-
         moves_evaluated++;
+        //pos.unmake_move();
 
         if(score > best_score)
         {
@@ -152,7 +155,7 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
     return best_score;
 }
 
-SearchResult Search::iteratively_deepen(const Position& pos)
+SearchResult Search::iteratively_deepen(PositionBase& pos)
 {
     Score score = 0;
     for(int depth = 1; depth <= max_ply; ++depth)
@@ -204,7 +207,7 @@ SearchResult Search::iteratively_deepen(const Position& pos)
     return result;
 }
 
-SearchResult Search::run(const Position& pos, const SearchParameters& parameters)
+SearchResult Search::run(PositionBase& pos, const SearchParameters& parameters)
 {
     state.parameters = parameters;
     state.plies = {};

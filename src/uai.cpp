@@ -53,7 +53,7 @@ void Uai::handle_moves(std::stringstream& reader)
         MoveStr moveStr;
         reader >> moveStr;
 
-        current_pos = current_pos.make_move(moveStr);
+        current_pos.make_move_in_place(moveStr);
     }
 }
 
@@ -184,6 +184,10 @@ void Uai::handle_input(const std::string& command)
         else if(token == "perft")
         {
             handle_perft(reader);
+        }
+        else if(token == "perftsuite")
+        {
+            Perft::perft_suite();
         }
         else if(token == "go")
         {

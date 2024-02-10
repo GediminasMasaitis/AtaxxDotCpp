@@ -1,7 +1,7 @@
 #include "evaluation.h"
 #include "attacks.h"
 
-Score evaluate_color(const Position& pos, Color color)
+Score evaluate_color(const PositionBase& pos, Color color)
 {
     Score score = 0;
     auto pieces = pos.Bitboards[color];
@@ -24,7 +24,7 @@ Score evaluate_color(const Position& pos, Color color)
     return score;
 }
 
-Score Evaluation::evaluate(const Position& pos)
+Score Evaluation::evaluate(const PositionBase& pos)
 {
     Score score = 0;
 

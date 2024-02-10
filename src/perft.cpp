@@ -1,13 +1,15 @@
 #include "perft.h"
+
 #include "fens.h"
 #include "movegen.h"
 
+#include <cassert>
 #include <chrono>
 #include <iostream>
 
 using namespace std;
 
-uint64_t Perft::perft(const Position& pos, const Ply depth)
+uint64_t Perft::perft(PositionBase& pos, const Ply depth)
 {
     if (depth == 0)
     {
@@ -22,14 +24,16 @@ uint64_t Perft::perft(const Position& pos, const Ply depth)
     for (MoveCount i = 0; i < move_count; ++i)
     {
         const Move move = moves[i];
-        Position new_pos = pos.make_move(move);
-        nodes += perft(new_pos, depth - 1);
+        //pos.make_move_in_place(move);
+        const auto npos = pos.make_move_copy(move);
+        nodes += perft(pos, depth - 1);
+        //pos.unmake_move();
     }
 
     return nodes;
 }
 
-void Perft::perft_deepen(const Position& pos, const Ply depth, vector<uint64_t>* verfication)
+void Perft::perft_deepen(PositionBase& pos, const Ply depth, vector<uint64_t>* verfication)
 {
     for (Ply i = 1; i <= depth; ++i)
     {
@@ -64,7 +68,7 @@ void Perft::perft_deepen(const Position& pos, const Ply depth, vector<uint64_t>*
 
 void Perft::perft_deepen(const Fen& fen, const Ply depth, vector<uint64_t>* verfication)
 {
-    const Position pos = Fens::parse(fen);
+    Position pos = Fens::parse(fen);
     perft_deepen(pos, depth, verfication);
 }
 

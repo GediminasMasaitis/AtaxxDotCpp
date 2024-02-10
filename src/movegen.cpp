@@ -6,7 +6,7 @@
 
 using namespace std;
 
-void MoveGenerator::generate(const Position& pos, MoveArray& move_array, MoveCount& move_index)
+void MoveGenerator::generate(const PositionBase& pos, MoveArray& move_array, MoveCount& move_index)
 {
     auto pieces = pos.Bitboards[pos.Turn];
     auto near = pieces | north(pieces) | south(pieces);

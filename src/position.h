@@ -4,15 +4,38 @@
 #include "types.h"
 #include "move.h"
 
-struct Position
+#include <array>
+#include <vector>
+
+struct PositionBase
 {
     ZobristKey Key;
     Color Turn;
     EachSquare<Square> Squares;
     EachPiece<Bitboard> Bitboards;
 
-    Position make_move(const Move& move) const;
-    Position make_move(const MoveStr& move_str) const;
+    PositionBase make_move_copy(const Move& move) const;
+    PositionBase make_move_copy(const MoveStr& move_str) const;
+
+    bool operator ==(const PositionBase& position_base) const = default;
+};
+
+struct UndoData
+{
+    ZobristKey key;
+    Move move;
+    Bitboard captured;
+};
+
+struct Position : PositionBase
+{
+    //std::vector<UndoData> History;
+    std::array<UndoData, 1024> History;
+    int32_t HistoryCount = 0;
+
+    void make_move_in_place(const Move& move);
+    void make_move_in_place(const MoveStr& move_str);
+    void unmake_move();
 };
 
 #endif // !POSITION_H

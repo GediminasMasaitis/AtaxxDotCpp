@@ -5,13 +5,13 @@
 
 #include <cassert>
 
-Position Position::make_move(const Move& move) const
+PositionBase PositionBase::make_move_copy(const Move& move) const
 {
-    Position new_pos = *this;
+    PositionBase new_pos = *this;
     new_pos.Turn = !new_pos.Turn;
     new_pos.Key ^= Zobrist.turn;
 
-    if(move == no_move)
+    if (move == no_move)
     {
         return new_pos;
     }
@@ -26,7 +26,7 @@ Position Position::make_move(const Move& move) const
     new_pos.Key ^= Zobrist.squares[move.Turn][move.To];
 
     // FROM
-    if(move.From != no_square)
+    if (move.From != no_square)
     {
         assert(move.From != move.To);
         assert(new_pos.Squares[move.From] == move.Turn);
@@ -51,8 +51,107 @@ Position Position::make_move(const Move& move) const
     return new_pos;
 }
 
-Position Position::make_move(const MoveStr& move_str) const
+PositionBase PositionBase::make_move_copy(const MoveStr& move_str) const
 {
     const Move move = Move::from_move_str(Turn, move_str);
-    return make_move(move);
+    return make_move_copy(move);
+}
+
+void Position::make_move_in_place(const Move& move)
+{
+    auto attacked = Attacks.near[move.To] & Bitboards[!move.Turn];
+    History[HistoryCount] = { Key, move, attacked };
+    HistoryCount++;
+
+    //const auto entry = UndoData(Key, move, attacked);
+    //History.push_back(entry);
+
+    Turn = !Turn;
+    Key ^= Zobrist.turn;
+
+    if(move == no_move)
+    {
+        return;
+    }
+
+    // TO
+    assert(move.Turn == !Turn);
+    assert(move.To != no_square);
+    assert(Squares[move.To] == Pieces::Empty);
+    Squares[move.To] = move.Turn;
+    Bitboards[move.Turn] |= get_bitboard(move.To);
+    Bitboards[Pieces::Empty] &= ~get_bitboard(move.To);
+    Key ^= Zobrist.squares[move.Turn][move.To];
+
+    // FROM
+    if(move.From != no_square)
+    {
+        assert(move.From != move.To);
+        assert(Squares[move.From] == move.Turn);
+        Squares[move.From] = Pieces::Empty;
+        Bitboards[move.Turn] &= ~get_bitboard(move.From);
+        Bitboards[Pieces::Empty] |= get_bitboard(move.From);
+        Key ^= Zobrist.squares[move.Turn][move.From];
+    }
+
+    // CAPTURE
+    Bitboards[move.Turn] |= attacked;
+    Bitboards[!move.Turn] &= ~attacked;
+    while (attacked)
+    {
+        const auto attacked_square = pop_lsb(attacked);
+        Squares[attacked_square] = move.Turn;
+        Key ^= Zobrist.squares[move.Turn][attacked_square];
+        Key ^= Zobrist.squares[!move.Turn][attacked_square];
+    }
+}
+
+void Position::make_move_in_place(const MoveStr& move_str)
+{
+    const Move move = Move::from_move_str(Turn, move_str);
+    make_move_in_place(move);
+}
+
+void Position::unmake_move()
+{
+    //UndoData undo_data = History[History.size() - 1];
+    //History.pop_back();
+    HistoryCount--;
+    UndoData& undo_data = History[HistoryCount];
+
+    const Move& move = undo_data.move;
+    Key = undo_data.key;
+
+    Turn = !Turn;
+    if(move == no_move)
+    {
+        return;
+    }
+
+    // TO
+    assert(move.Turn == Turn);
+    assert(move.To != no_square);
+    assert(Squares[move.To] == move.Turn);
+    Squares[move.To] = Pieces::Empty;
+    Bitboards[move.Turn] &= ~get_bitboard(move.To);
+    Bitboards[Pieces::Empty] |= get_bitboard(move.To);
+
+    // FROM
+    if(undo_data.move.From != no_square)
+    {
+        assert(move.From != move.To);
+        assert(Squares[move.From] == Pieces::Empty);
+        Squares[move.From] = Turn;
+        Bitboards[Turn] |= get_bitboard(move.From);
+        Bitboards[Pieces::Empty] &= ~get_bitboard(move.From);
+    }
+
+    // CAPTURE
+    Bitboards[move.Turn] &= ~undo_data.captured;
+    Bitboards[!move.Turn] |= undo_data.captured;
+    while (undo_data.captured)
+    {
+        const auto attacked_square = pop_lsb(undo_data.captured);
+        Squares[attacked_square] = !move.Turn;
+    }
 }
