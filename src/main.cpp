@@ -6,7 +6,7 @@ using namespace std;
 
 int main()
 {
-    cout << "Ataxx.cpp by Gediminas Masaitis" << endl;
+    cout << "ataxx.cpp by Gediminas Masaitis" << endl;
 
     Uai uai;
     uai.run();
