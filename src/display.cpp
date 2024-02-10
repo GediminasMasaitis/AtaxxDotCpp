@@ -3,6 +3,7 @@
 #include "fens.h"
 #include "evaluation.h"
 
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 
@@ -54,8 +55,11 @@ void Display::display_position(const Position& pos)
     const auto fen = Fens::serialize(pos);
     ss << "FEN: " << fen << endl;
 
+    ss << "White: 0x" << hex << setfill('0') << setw(16) << pos.Bitboards[Colors::White] << endl;
+    ss << "Black: 0x" << hex << setfill('0') << setw(16) << pos.Bitboards[Colors::Black] << endl;
+
     const auto eval = Evaluation::evaluate(pos);
-    ss << "Eval: " << eval << endl;
+    ss << "Eval: " << dec << eval << endl;
 
     ss << endl;
     const auto str = ss.str();

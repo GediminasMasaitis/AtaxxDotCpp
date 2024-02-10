@@ -152,11 +152,12 @@ Score Search::alpha_beta(const Position& pos, const Ply depth, const Ply ply, Sc
     return best_score;
 }
 
-void Search::iteratively_deepen(const Position& pos)
+SearchResult Search::iteratively_deepen(const Position& pos)
 {
+    Score score = 0;
     for(int depth = 1; depth <= max_ply; ++depth)
     {
-        Score score = alpha_beta(pos, depth, 0, -inf, inf, true);
+        score = alpha_beta(pos, depth, 0, -inf, inf, true);
         if(state.timer.stopped)
         {
             break;
@@ -198,9 +199,12 @@ void Search::iteratively_deepen(const Position& pos)
         const auto move_str = state.saved_pv.moves[0].to_move_str();
         cout << "bestmove " << move_str << endl;
     }
+
+    const SearchResult result = SearchResult(state.saved_pv.moves[0], score);
+    return result;
 }
 
-void Search::run(const Position& pos, const SearchParameters& parameters)
+SearchResult Search::run(const Position& pos, const SearchParameters& parameters)
 {
     state.parameters = parameters;
     state.plies = {};
@@ -208,5 +212,6 @@ void Search::run(const Position& pos, const SearchParameters& parameters)
     const Time time = pos.Turn == Colors::White ? state.parameters.white_time : state.parameters.black_time;
     const Time increment = pos.Turn == Colors::White ? state.parameters.white_increment : state.parameters.black_increment;
     state.timer.init(parameters.infinite, parameters.nodes_min, parameters.nodes_max, time, increment);
-    iteratively_deepen(pos);
+    const SearchResult result = iteratively_deepen(pos);
+    return result;
 }

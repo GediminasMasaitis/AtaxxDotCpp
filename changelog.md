@@ -428,7 +428,7 @@ Added board display, node-limited search
 
 ### 1.16.1
 
-Added loss by no pieces detection
+Loss by no pieces detection
 
 ```
 +---+---+---+---+---+---+---+

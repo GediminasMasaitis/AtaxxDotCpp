@@ -203,7 +203,7 @@ void Uai::handle_input(const std::string& command)
         {
             handle_input("go infinite");
         }
-        else if(token == "datagen")
+        else if(token == "datagen" || token == "dg")
         {
             Datagen::run();
         }
