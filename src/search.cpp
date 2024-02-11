@@ -71,7 +71,7 @@ Score Search::alpha_beta(PositionBase& pos, const Ply depth, const Ply ply, Scor
 
     MoveArray moves;
     MoveCount move_count = 0;
-    MoveGenerator::generate(pos, moves, move_count);
+    MoveGenerator::generate_all(pos, moves, move_count);
     MoveScoreArray move_scores;
     MoveOrder::calculate_move_scores(pos, state, tt_entry.move, moves, move_scores, move_count);
     

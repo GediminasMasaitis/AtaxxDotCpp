@@ -18,7 +18,7 @@ uint64_t Perft::perft(PositionBase& pos, const Ply depth)
 
     MoveArray moves;
     MoveCount move_count = 0;
-    MoveGenerator::generate(pos, moves, move_count);
+    MoveGenerator::generate_all(pos, moves, move_count);
 
     uint64_t nodes = 0;
     for (MoveCount i = 0; i < move_count; ++i)
@@ -33,7 +33,7 @@ uint64_t Perft::perft(PositionBase& pos, const Ply depth)
     return nodes;
 }
 
-void Perft::perft_deepen(PositionBase& pos, const Ply depth, vector<uint64_t>* verfication)
+void Perft::perft_deepen(PositionBase& pos, const Ply depth, vector<uint64_t>* verification)
 {
     for (Ply i = 1; i <= depth; ++i)
     {
@@ -47,11 +47,11 @@ void Perft::perft_deepen(PositionBase& pos, const Ply depth, vector<uint64_t>* v
         }
         auto nps = nodes * 1000 / duration;
         cout << "time " << duration << " depth " << to_string(i) << " nodes " << nodes << " nps " << nps;
-        if(verfication != nullptr)
+        if(verification != nullptr)
         {
-            if(verfication->size() > i)
+            if(verification->size() > i)
             {
-                auto iteration_verification = (*verfication)[i];
+                const auto iteration_verification = (*verification)[i];
                 if(iteration_verification == nodes)
                 {
                     cout << " verify OK";
@@ -66,10 +66,10 @@ void Perft::perft_deepen(PositionBase& pos, const Ply depth, vector<uint64_t>* v
     }
 }
 
-void Perft::perft_deepen(const Fen& fen, const Ply depth, vector<uint64_t>* verfication)
+void Perft::perft_deepen(const Fen& fen, const Ply depth, vector<uint64_t>* verification)
 {
     Position pos = Fens::parse(fen);
-    perft_deepen(pos, depth, verfication);
+    perft_deepen(pos, depth, verification);
 }
 
 void Perft::perft_suite()

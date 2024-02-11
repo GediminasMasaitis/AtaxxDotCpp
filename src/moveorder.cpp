@@ -14,7 +14,8 @@ void MoveOrder::calculate_move_scores(const PositionBase& position, const Search
         else
         {
             const Bitboard captures = Attacks.near[move.To] & position.Bitboards[!position.Turn];
-            move_score = 1LL << (50 + pop_count(captures));
+            const int32_t material_gain = pop_count(captures) + (move.From == no_square ? 1 : 0);
+            move_score = 1LL << (50 + material_gain);
             move_score += state.history[move.From][move.To];
         }
         move_scores[i] = move_score;

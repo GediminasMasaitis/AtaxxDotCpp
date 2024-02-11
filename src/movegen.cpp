@@ -1,12 +1,11 @@
 #include "movegen.h"
 #include "attacks.h"
 
-#include <bit>
 #include <cassert>
 
 using namespace std;
 
-void MoveGenerator::generate(const PositionBase& pos, MoveArray& move_array, MoveCount& move_index)
+void MoveGenerator::generate_near(const PositionBase& pos, MoveArray& move_array, MoveCount& move_index)
 {
     auto pieces = pos.Bitboards[pos.Turn];
     auto near = pieces | north(pieces) | south(pieces);
@@ -19,21 +18,29 @@ void MoveGenerator::generate(const PositionBase& pos, MoveArray& move_array, Mov
         move_array[move_index] = Move(pos.Turn, no_square, to);
         move_index++;
     }
+}
 
-    Bitboard all_far = 0;
-    while (pieces)
+void MoveGenerator::generate_far(const PositionBase& pos, MoveArray& move_array, MoveCount& move_index)
+{
+    auto pieces = pos.Bitboards[pos.Turn];
+    while(pieces)
     {
         const auto from = pop_lsb(pieces);
         auto far = Attacks.far[from];
         far &= pos.Bitboards[Pieces::Empty];
-        all_far |= far;
-        while (far)
+        while(far)
         {
             const auto to = pop_lsb(far);
             move_array[move_index] = Move(pos.Turn, from, to);
             move_index++;
         }
     }
+}
+
+void MoveGenerator::generate_all(const PositionBase& pos, MoveArray& move_array, MoveCount& move_index)
+{
+    generate_near(pos, move_array, move_index);
+    generate_far(pos, move_array, move_index);
 
     if(move_index == 0 && pos.Bitboards[pos.Turn])
     {

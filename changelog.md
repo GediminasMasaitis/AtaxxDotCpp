@@ -484,7 +484,7 @@ info depth 16 time 19943 score 100 nodes 113292568 nps 5680818 pv f2 b2 e2 c2 d1
 ```
 
 ```
-1+0.01
+1+0.01:
 Score of AtaxxDotCpp-1.16 vs AtaxxDotCpp-1.15.1: 4848 - 4935 - 217  [0.496] 10000
 -3.02 +/- 6.73
 ```
@@ -530,4 +530,38 @@ FEN: x5o/7/7/7/7/7/o5x x
 White: 0x0040000000000001
 Black: 0x0001000000000040
 Eval: 400
+```
+
+### 1.17
+
+Order moves by total material gain
+
+```
+info depth 1 time 1 score -300 nodes 9 nps 9000 pv f1
+info depth 2 time 1 score 400 nodes 34 nps 34000 pv f1 b1
+info depth 3 time 1 score -300 nodes 225 nps 225000 pv f1 b1 e1
+info depth 4 time 1 score 200 nodes 481 nps 481000 pv f1 a1c1 e2 c1e1
+info depth 5 time 1 score -100 nodes 2414 nps 2414000 pv f2 b1 f2e4 c1 e4c2
+info depth 6 time 1 score 200 nodes 10170 nps 10170000 pv b6 b1 b5 b1d1 f1 d1f2
+info depth 7 time 3 score 0 nodes 23638 nps 7879333 pv b6 b1 b5 b1d1 b5d5 f6 d5f7
+info depth 8 time 9 score 100 nodes 66058 nps 7339777 pv b6 b1 b5 b2 c4 b3 b5c3 c2
+info depth 9 time 27 score 0 nodes 192762 nps 7139333 pv b6 b1 b5 b2 c4 b3 b5c3 a1c2 c4a2
+info depth 10 time 91 score 100 nodes 587396 nps 6454901 pv b6 b1 b5 a2 a6 c2 f1 f6 e1 c2e2
+info depth 11 time 389 score 0 nodes 2420594 nps 6222606 pv b6 b1 b5 a2 a6 c2 f1 d1 e1 c2e2 f2
+info depth 12 time 1217 score 100 nodes 7163414 nps 5886124 pv b6 b2 f1 c1 g2 b1 b7 f6 c5 d1 e1 c1e2
+info depth 13 time 2861 score 0 nodes 16346976 nps 5713728 pv b6 b2 f1 b3 e1 g6 c6 a2 e2 b2d1 f1d2 c2 e1c3
+info depth 14 time 8493 score 100 nodes 46374127 nps 5460276 pv b6 b2 c6 c2 d6 a3 d6f7 d1 e6 d1f2 e5 d1 e5c3 b3
+info depth 15 time 25177 score 0 nodes 135696524 nps 5389701 pv b6 b2 c5 c1 d6 d2 e6 e1 f6 f1 c6 c3 b4 b2c4 b5
+```
+
+```
+1+0.01:
+Score of AtaxxDotCpp-1.17 vs AtaxxDotCpp-1.16.1: 2704 - 2175 - 121  [0.553] 5000
+36.90 +/- 9.55
+```
+
+```
+60+0.6:
+Score of AtaxxDotCpp-1.17 vs AtaxxDotCpp-1.16.1: 1746 - 1165 - 89  [0.597] 3000
+68.15 +/- 12.46
 ```
