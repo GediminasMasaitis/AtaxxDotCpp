@@ -78,7 +78,6 @@ Score Search::alpha_beta(PositionBase& pos, const Ply depth, const Ply ply, Scor
     Score best_score = -inf;
     Move best_move = no_move;
     TranspositionTableFlag flag = Upper;
-    int moves_evaluated = 0;
     for(MoveCount move_index = 0; move_index < move_count; ++move_index)
     {
         MoveOrder::order_next_move(moves, move_scores, move_count, move_index);
@@ -89,16 +88,15 @@ Score Search::alpha_beta(PositionBase& pos, const Ply depth, const Ply ply, Scor
 
         // PRINCIPAL VARIATION SEARCH
         Score score;
-        if(moves_evaluated > 0)
+        if(move_index > 0)
         {
-            auto reduction = moves_evaluated > 8 && depth > 4 ? 2 : 0;
+            auto reduction = move_index > 8 && depth > 4 ? 2 : 0;
             score = -alpha_beta(npos, depth - 1 - reduction, ply + 1, -alpha - 1, -alpha, false);
         }
-        if(moves_evaluated == 0 || (score > alpha && score < beta))
+        if(move_index == 0 || (score > alpha && score < beta))
         {
             score = -alpha_beta(npos, depth - 1, ply + 1, -beta, -alpha, true);
         }
-        moves_evaluated++;
         //pos.unmake_move();
 
         if(score > best_score)
@@ -140,7 +138,7 @@ Score Search::alpha_beta(PositionBase& pos, const Ply depth, const Ply ply, Scor
         }
 
         // LATE MOVE PRUNING
-        if(moves_evaluated > 4 + 4 * depth * depth)
+        if(move_index > 3 + 4 * depth * depth)
         {
             break;
         }

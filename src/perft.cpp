@@ -1,5 +1,6 @@
 #include "perft.h"
 
+#include "display.h"
 #include "fens.h"
 #include "movegen.h"
 
@@ -11,9 +12,16 @@ using namespace std;
 
 uint64_t Perft::perft(PositionBase& pos, const Ply depth)
 {
+    //Display::display_position(pos);
+
     if (depth == 0)
     {
         return 1;
+    }
+
+    if(!pos.Bitboards[pos.Turn])
+    {
+        return 0;
     }
 
     MoveArray moves;
@@ -25,8 +33,8 @@ uint64_t Perft::perft(PositionBase& pos, const Ply depth)
     {
         const Move move = moves[i];
         //pos.make_move_in_place(move);
-        const auto npos = pos.make_move_copy(move);
-        nodes += perft(pos, depth - 1);
+        auto npos = pos.make_move_copy(move);
+        nodes += perft(npos, depth - 1);
         //pos.unmake_move();
     }
 

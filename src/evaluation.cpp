@@ -29,9 +29,20 @@ Score Evaluation::evaluate(const PositionBase& pos)
     Score score = 0;
 
     // TEMPO
+    
     score += 400;
     
     score += evaluate_color(pos, pos.Turn);
     score -= evaluate_color(pos, !pos.Turn);
+    return score;
+}
+
+Score Evaluation::evaluate_from_pov(const PositionBase& pos, Color color)
+{
+    Score score = evaluate(pos);
+    if(pos.Turn != color)
+    {
+        score = static_cast<Score>(-score);
+    }
     return score;
 }

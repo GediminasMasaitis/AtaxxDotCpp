@@ -7,7 +7,7 @@
 struct Fens
 {
     static Position parse(const Fen& fen);
-    static Fen serialize(const Position& pos);
+    static Fen serialize(const PositionBase& pos);
 };
 
 #endif // !FEN_H

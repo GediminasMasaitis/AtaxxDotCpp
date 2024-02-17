@@ -9,9 +9,9 @@
 
 using namespace std;
 
-void Display::display_position(const Position& pos)
+void Display::display_position(const PositionBase& pos)
 {
-    const auto eval = Evaluation::evaluate(pos);
+    const auto eval = Evaluation::evaluate_from_pov(pos);
 
     stringstream ss;
     const std::string border = "+-------+-------+-------+-------+-------+-------+-------+\n";
@@ -53,12 +53,12 @@ void Display::display_position(const Position& pos)
             const Piece piece = pos.Squares[sq];
             if(piece != Pieces::Empty)
             {
-                Position npos = pos;
+                PositionBase npos = pos;
                 npos.Squares[sq] = Pieces::Empty;
                 npos.Bitboards[Colors::White] &= ~get_bitboard(sq);
                 npos.Bitboards[Colors::Black] &= ~get_bitboard(sq);
-                const auto eval_without_piece = Evaluation::evaluate(npos);
-                const auto diff = eval_without_piece - eval;
+                const auto eval_without_piece = Evaluation::evaluate_from_pov(npos);
+                const auto diff = eval - eval_without_piece;
 
                 const std::string diffStr = std::to_string(diff);
                 const auto padLeft = static_cast<int32_t>((7 - diffStr.size()) / 2);

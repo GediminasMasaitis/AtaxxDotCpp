@@ -7,6 +7,11 @@ using namespace std;
 
 MoveStr Move::to_move_str() const
 {
+    if(*this == passes[Turn])
+    {
+        return "pass";
+    }
+
     MoveStr to_str = to_square_str(To);
     if(From == no_square)
     {

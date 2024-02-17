@@ -7,17 +7,19 @@
 
 PositionBase PositionBase::make_move_copy(const Move& move) const
 {
+    assert(move != no_move);
+    assert(move.Turn == Turn);
+
     PositionBase new_pos = *this;
     new_pos.Turn = !new_pos.Turn;
     new_pos.Key ^= Zobrist.turn;
 
-    if (move == no_move)
+    if (move == passes[move.Turn])
     {
         return new_pos;
     }
 
     // TO
-    assert(move.Turn == this->Turn);
     assert(move.To != no_square);
     assert(new_pos.Squares[move.To] == Pieces::Empty);
     new_pos.Squares[move.To] = move.Turn;
@@ -59,23 +61,22 @@ PositionBase PositionBase::make_move_copy(const MoveStr& move_str) const
 
 void Position::make_move_in_place(const Move& move)
 {
+    assert(move != no_move);
+    assert(move.Turn == Turn);
+
     auto attacked = Attacks.near[move.To] & Bitboards[!move.Turn];
     History[HistoryCount] = { Key, move, attacked };
     HistoryCount++;
 
-    //const auto entry = UndoData(Key, move, attacked);
-    //History.push_back(entry);
-
     Turn = !Turn;
     Key ^= Zobrist.turn;
 
-    if(move == no_move)
+    if(move == passes[move.Turn])
     {
         return;
     }
 
     // TO
-    assert(move.Turn == !Turn);
     assert(move.To != no_square);
     assert(Squares[move.To] == Pieces::Empty);
     Squares[move.To] = move.Turn;
@@ -114,22 +115,21 @@ void Position::make_move_in_place(const MoveStr& move_str)
 
 void Position::unmake_move()
 {
-    //UndoData undo_data = History[History.size() - 1];
-    //History.pop_back();
     HistoryCount--;
     UndoData& undo_data = History[HistoryCount];
 
     const Move& move = undo_data.move;
-    Key = undo_data.key;
+    assert(move != no_move);
 
+    Key = undo_data.key;
     Turn = !Turn;
-    if(move == no_move)
+    assert(move.Turn == Turn);
+    if(move == passes[move.Turn])
     {
         return;
     }
 
     // TO
-    assert(move.Turn == Turn);
     assert(move.To != no_square);
     assert(Squares[move.To] == move.Turn);
     Squares[move.To] = Pieces::Empty;

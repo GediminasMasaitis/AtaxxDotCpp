@@ -39,12 +39,15 @@ void MoveGenerator::generate_far(const PositionBase& pos, MoveArray& move_array,
 
 void MoveGenerator::generate_all(const PositionBase& pos, MoveArray& move_array, MoveCount& move_index)
 {
+    assert(pos.Bitboards[pos.Turn]);
+
     generate_near(pos, move_array, move_index);
     generate_far(pos, move_array, move_index);
 
-    if(move_index == 0 && pos.Bitboards[pos.Turn])
+    // Pass
+    if(move_index == 0)
     {
-        move_array[move_index] = no_move;
+        move_array[move_index] = passes[pos.Turn];
         move_index++;
     }
 

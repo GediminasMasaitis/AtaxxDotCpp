@@ -99,7 +99,7 @@ Position Fens::parse(const Fen& fen)
     return pos;
 }
 
-Fen Fens::serialize(const Position& pos)
+Fen Fens::serialize(const PositionBase& pos)
 {
     stringstream ss;
 

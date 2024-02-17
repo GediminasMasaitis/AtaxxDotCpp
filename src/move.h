@@ -25,6 +25,11 @@ struct Move
 };
 
 static constexpr Move no_move = Move(Colors::White, 0, 0);
+//static constexpr Move pass = Move(Colors::White, 1, 1);
+static constexpr EachColor<Move> passes = EachColor<Move> {
+    Move(Colors::White, no_square, no_square),
+    Move(Colors::Black, no_square, no_square),
+};
 
 using MoveCount = uint16_t;
 constexpr MoveCount max_move_count = 1024;
