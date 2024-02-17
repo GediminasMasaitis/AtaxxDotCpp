@@ -23,7 +23,7 @@ Score Search::alpha_beta(PositionBase& pos, const Ply depth, const Ply ply, Scor
     }
 
     // WIN / LOSS / DRAW BY MAJORITY
-    if(pos.Bitboards[Pieces::Empty] == 0)
+    if((pos.Bitboards[Pieces::White] | pos.Bitboards[Pieces::Black]) == pos.playable)
     {
         const auto own_count = pop_count(pos.Bitboards[pos.Turn]);
         const auto opp_count = pop_count(pos.Bitboards[!pos.Turn]);

@@ -13,6 +13,7 @@ struct PositionBase
     Color Turn;
     EachSquare<Square> Squares;
     EachPiece<Bitboard> Bitboards;
+    Bitboard playable;
 
     PositionBase make_move_copy(const Move& move) const;
     PositionBase make_move_copy(const MoveStr& move_str) const;

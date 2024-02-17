@@ -24,6 +24,11 @@ uint64_t Perft::perft(PositionBase& pos, const Ply depth)
         return 0;
     }
 
+    if((pos.Bitboards[Pieces::White] | pos.Bitboards[Pieces::Black]) == pos.playable)
+    {
+        return 0;
+    }
+
     MoveArray moves;
     MoveCount move_count = 0;
     MoveGenerator::generate_all(pos, moves, move_count);

@@ -1,5 +1,6 @@
 #include "fens.h"
 
+#include "attacks.h"
 #include "zobrist.h"
 
 #include <iostream>
@@ -14,6 +15,26 @@ static void check_file(const Fen& fen, const File file)
     {
         do_throw("Malformed FEN " + fen);
     }
+}
+
+static constexpr Bitboard get_playable_zone(const PositionBase& pos)
+{
+    Bitboard playable_zone = pos.Bitboards[Pieces::White] | pos.Bitboards[Pieces::Black];
+    while(true)
+    {
+        const Bitboard old_playable_zone = playable_zone;
+        for(auto i = 0; i < 2; i++)
+        {
+            playable_zone |= north(playable_zone) | south(playable_zone);
+            playable_zone |= west(playable_zone) | east(playable_zone);
+        }
+        playable_zone &= ~pos.Bitboards[Pieces::Wall];
+        if(playable_zone == old_playable_zone)
+        {
+            break;
+        }
+    }
+    return playable_zone;
 }
 
 Position Fens::parse(const Fen& fen)
@@ -96,6 +117,7 @@ Position Fens::parse(const Fen& fen)
 
     pos.Bitboards[Pieces::Empty] = ~(pos.Bitboards[Pieces::White] | pos.Bitboards[Pieces::Black] | pos.Bitboards[Pieces::Wall]) & available_position;
     pos.Key = Zobrist.get_key(pos.Turn, pos.Squares);
+    pos.playable = get_playable_zone(pos);
     return pos;
 }
 

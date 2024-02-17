@@ -92,8 +92,13 @@ void Display::display_position(const PositionBase& pos)
     const auto fen = Fens::serialize(pos);
     ss << "Turn: " << turn_ch << endl;
     ss << "FEN: " << fen << endl;
-    ss << "White: 0x" << hex << setfill('0') << setw(16) << pos.Bitboards[Colors::White] << endl;
-    ss << "Black: 0x" << hex << setfill('0') << setw(16) << pos.Bitboards[Colors::Black] << endl;
+    ss << endl;
+    ss << "White: 0x" << hex << setfill('0') << setw(16) << pos.Bitboards[Pieces::White] << endl;
+    ss << "Black: 0x" << hex << setfill('0') << setw(16) << pos.Bitboards[Pieces::Black] << endl;
+    ss << "Wall:  0x" << hex << setfill('0') << setw(16) << pos.Bitboards[Pieces::Wall] << endl;
+    ss << "Empty: 0x" << hex << setfill('0') << setw(16) << pos.Bitboards[Pieces::Empty] << endl;
+    ss << "Play:  0x" << hex << setfill('0') << setw(16) << pos.playable << endl;
+    ss << endl;
     ss << "Eval: " << dec << eval << endl;
 
     ss << endl;
