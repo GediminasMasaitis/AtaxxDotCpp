@@ -5,6 +5,21 @@
 
 #include <cassert>
 
+bool PositionBase::is_terminal() const
+{
+    if(Bitboards[Turn] == 0)
+    {
+        return true;
+    }
+
+    if((Bitboards[Pieces::White] | Bitboards[Pieces::Black]) == playable)
+    {
+        return true;
+    }
+
+    return false;
+}
+
 PositionBase PositionBase::make_move_copy(const Move& move) const
 {
     assert(move != no_move);
@@ -64,6 +79,7 @@ void Position::make_move_in_place(const Move& move)
     assert(move != no_move);
     assert(move.Turn == Turn);
 
+    assert(HistoryCount < max_history_count);
     auto attacked = Attacks.near[move.To] & Bitboards[!move.Turn];
     History[HistoryCount] = { Key, move, attacked };
     HistoryCount++;

@@ -19,12 +19,8 @@ uint64_t Perft::perft(PositionBase& pos, const Ply depth)
         return 1;
     }
 
-    if(!pos.Bitboards[pos.Turn])
-    {
-        return 0;
-    }
-
-    if((pos.Bitboards[Pieces::White] | pos.Bitboards[Pieces::Black]) == pos.playable)
+    const auto is_terminal = pos.is_terminal();
+    if(is_terminal)
     {
         return 0;
     }

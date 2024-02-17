@@ -15,6 +15,7 @@ struct PositionBase
     EachPiece<Bitboard> Bitboards;
     Bitboard playable;
 
+    bool is_terminal() const;
     PositionBase make_move_copy(const Move& move) const;
     PositionBase make_move_copy(const MoveStr& move_str) const;
 
@@ -30,8 +31,8 @@ struct UndoData
 
 struct Position : PositionBase
 {
-    //std::vector<UndoData> History;
-    std::array<UndoData, 1024> History;
+    static constexpr int32_t max_history_count = 1024;
+    std::array<UndoData, max_history_count> History;
     int32_t HistoryCount = 0;
 
     void make_move_in_place(const Move& move);

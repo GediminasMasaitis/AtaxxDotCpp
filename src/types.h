@@ -142,8 +142,8 @@ constexpr Score mate = 31000;
 using MoveScore = int64_t;
 using Time = int64_t;
 using NodeCount = uint64_t;
-
 using ZobristKey = uint64_t;
+using ThreadCount = uint8_t;
 
 #define EXCEPTIONS 1
 static void do_throw(const std::string&& message)
