@@ -1,12 +1,13 @@
 #include "datagen.h"
 
-#include <cassert>
-
 #include "display.h"
 #include "fens.h"
 #include "movegen.h"
 #include "search.h"
 
+#include <cassert>
+#include <chrono>
+#include <iomanip>
 #include <iostream>
 #include <fstream>
 #include <mutex>
@@ -16,6 +17,7 @@
 #include <vector>
 
 using namespace std;
+using namespace chrono;
 
 using Wdl = int8_t;
 
@@ -26,14 +28,45 @@ struct DatagenResult
     Score score;
 };
 
-struct DatagenStats
+struct DatagenStatsEntry
 {
     uint64_t nodes = 0;
     uint64_t positions = 0;
     uint64_t games = 0;
+
+    DatagenStatsEntry& operator+=(const DatagenStatsEntry& other) {
+        nodes += other.nodes;
+        positions += other.positions;
+        games += other.games;
+        return *this;
+    }
 };
 
-static constexpr ThreadCount thread_count = 8;
+static DatagenStatsEntry operator+(DatagenStatsEntry lhs, const DatagenStatsEntry& rhs) {
+    lhs += rhs;
+    return lhs;
+}
+
+static std::ostream& operator<<(std::ostream& os, const DatagenStatsEntry& entry) {
+    os << "Nodes: " << entry.nodes << ", Positions: " << entry.positions << ", Games: " << entry.games;
+    return os;
+}
+
+struct DatagenStats
+{
+    DatagenStatsEntry total{};
+    DatagenStatsEntry discarded_repetition{};
+
+    DatagenStats& operator+=(const DatagenStats& other)
+    {
+        total += other.total;
+        discarded_repetition += other.discarded_repetition;
+        return *this;
+    }
+};
+
+static constexpr uint64_t seed_base = 1;
+static constexpr ThreadCount thread_count = 1;
 static const Position initial_pos = Fens::parse(initial_fen);
 
 void write_result(ostream& stream, const DatagenResult& result)
@@ -81,9 +114,16 @@ optional<Wdl> adjudicate(const Position& pos)
     return nullopt;
 }
 
-void run_iteration(Search& search, mt19937& rng, mutex& mut, DatagenStats& thread_stats, vector<DatagenResult>& thread_results, vector<DatagenResult>& iteration_results)
+
+void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search& search, mutex& mut, DatagenStats& thread_stats, vector<DatagenResult>& thread_results, vector<DatagenResult>& iteration_results)
 {
-    DatagenStats iteration_stats = DatagenStats{};
+    const uint64_t seed = seed_base * 1'000'000'000'000ULL + static_cast<uint64_t>(thread_id) * 1'000'000'000ULL + iteration;
+    auto rng = mt19937_64(seed);
+    //cout << iteration << endl;
+
+    auto iteration_stats_entry = DatagenStatsEntry{};
+    iteration_stats_entry.games = 1;
+
     Position pos;
     bool generate_initial_position = true;
     const MoveCount random_move_count = rng() % 2 == 0 ? 8 : 9;
@@ -125,6 +165,12 @@ void run_iteration(Search& search, mt19937& rng, mutex& mut, DatagenStats& threa
     }
     assert(!pos.is_terminal());
 
+    auto copy = pos;
+
+    //pos = Fens::parse("x1x4/1x5/x5o/7/7/2o3x/oo4x x");
+    search.state.table.clear();
+    search.state.history = {};
+
     SearchParameters parameters;
     parameters.nodes_min = 10000;
     parameters.nodes_max = 50000;
@@ -137,6 +183,21 @@ void run_iteration(Search& search, mt19937& rng, mutex& mut, DatagenStats& threa
         iteration_results.push_back(datagen_result);
         const Move best_move = search.state.saved_pv.moves[0];
         pos.make_move_in_place(best_move);
+        iteration_stats_entry.positions++;
+        iteration_stats_entry.nodes += search.state.nodes;
+
+        // On repetition, discard
+        for(int i = 0; i < pos.HistoryCount; i++)
+        {
+            if(pos.History[i].key == pos.Key)
+            {
+                lock_guard lock(mut);
+                thread_stats.discarded_repetition += iteration_stats_entry;
+                thread_stats.total += iteration_stats_entry;
+                return;
+            }
+        }
+
         if(pos.is_terminal())
         {
             break;
@@ -152,6 +213,31 @@ void run_iteration(Search& search, mt19937& rng, mutex& mut, DatagenStats& threa
     {
         wdl = 1 - wdl;
     }
+    else
+    {
+        auto a = 123;
+    }
+
+    Wdl wdl2;
+    if(pop_count(pos.Bitboards[Pieces::White]) > pop_count(pos.Bitboards[Pieces::Black]))
+    {
+        wdl2 = 1;
+    }
+    else if(pop_count(pos.Bitboards[Pieces::White]) < pop_count(pos.Bitboards[Pieces::Black]))
+    {
+        wdl2 = 0;
+    }
+    else
+    {
+        wdl2 = 0.5;
+    }
+
+    //assert(wdl == wdl2);
+    if(wdl != wdl2)
+    {
+        cout << "ARGH";
+        throw "A";
+    }
 
     for (DatagenResult& result : iteration_results)
     {
@@ -160,32 +246,57 @@ void run_iteration(Search& search, mt19937& rng, mutex& mut, DatagenStats& threa
 
     {
         lock_guard lock(mut);
-        thread_stats.nodes += iteration_stats.nodes;
-        thread_stats.positions += iteration_stats.positions;
-        thread_stats.games += iteration_stats.games;
+        thread_stats.total += iteration_stats_entry;
         thread_results.insert(thread_results.end(), iteration_results.begin(), iteration_results.end());
-        iteration_results.clear();
     }
+    iteration_results.clear();
 }
 
 static void run_thread(ThreadCount thread_id, mutex& mut, DatagenStats& thread_stats, vector<DatagenResult>& thread_results)
 {
-    mt19937 rng(thread_id);
     Search search;
     search.state.table.set_size(1024 * 1024 * 32);
     vector<DatagenResult> iteration_results;
-    while (true)
+    for(uint64_t iteration = 0; iteration < 1'000'000'000'000; iteration++)
     {
-        run_iteration(search, rng, mut, thread_stats, thread_results, iteration_results);
+        run_iteration(thread_id, iteration, search, mut, thread_stats, thread_results, iteration_results);
     }
+}
+
+static void print_stats(const DatagenStats& stats, time_point<high_resolution_clock> train_start)
+{
+    const auto now = high_resolution_clock::now();
+    const auto elapsed = now - train_start;
+    const auto elapsed_seconds = std::chrono::duration_cast<seconds>(elapsed);
+    auto elapsedSecondCount = static_cast<int32_t>(elapsed_seconds.count());
+    if (elapsedSecondCount == 0)
+    {
+        elapsedSecondCount = 1;
+    }
+
+    const auto pps = static_cast<double>(stats.total.positions) / elapsedSecondCount;
+    const auto pps_int = static_cast<size_t>(pps);
+    const auto discarded_percent = (static_cast<double>(stats.discarded_repetition.positions) / static_cast<double>(stats.total.positions)) * 100;
+
+    auto ss = stringstream();
+    ss << " Games: " << std::right << std::setw(4) << stats.total.games;
+    ss << " Positions: " << std::right << std::setw(9) << stats.total.positions;
+    ss << " (" << std::right << std::setw(3) << pps_int << " PPS)";
+    ss << " Discarded: " << std::fixed << std::setprecision(3) << discarded_percent << "%";
+    ss << std::endl;
+
+    const auto log = ss.str();
+    std::cout << log;
 }
 
 static void run_datagen()
 {
+    const auto train_start = high_resolution_clock::now();
+
     vector<thread> threads;
-    array<mutex, thread_count> mutexes;
-    array<DatagenStats, thread_count> thread_stats;
-    array<vector<DatagenResult>, thread_count> thread_results;
+    array<mutex, thread_count> mutexes{};
+    array<DatagenStats, thread_count> thread_stats{};
+    array<vector<DatagenResult>, thread_count> thread_results{};
     for(ThreadCount thread_id = 0; thread_id < thread_count; thread_id++)
     {
         threads.emplace_back([&, thread_id]()
@@ -194,8 +305,15 @@ static void run_datagen()
         });
     }
 
-    ofstream file("C:/shared/ataxx/data/data.bin", std::ios::out | std::ios::binary);
-    constexpr chrono::milliseconds delay = chrono::milliseconds(1000);
+#ifdef _WIN32
+    constexpr auto out_path = "C:/shared/ataxx/data/data2.bin";
+#else
+    constexpr auto out_path = "/shared/ataxx/data/data2.bin";
+#endif
+    cout << "Writing results to " << out_path << endl;
+    ofstream file(out_path, std::ios::out | std::ios::binary);
+
+    constexpr auto delay = milliseconds(1000);
     auto total_results = vector<DatagenResult>();
     while (true)
     {
@@ -207,16 +325,14 @@ static void run_datagen()
             lock_guard lock(mutexes[thread_id]);
 
             const auto& stats = thread_stats[thread_id];
-            total_stats.nodes += stats.nodes;
-            total_stats.positions += stats.positions;
-            total_stats.games += stats.games;
+            total_stats += stats;
 
             auto& this_thread_results = thread_results[thread_id];
             total_results.insert(total_results.end(), this_thread_results.begin(), this_thread_results.end());
             this_thread_results.clear();
         }
-
-        cout << total_results.size() << endl;
+        
+        print_stats(total_stats, train_start);
         write_results(file, total_results);
         total_results.clear();
     }
