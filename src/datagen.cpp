@@ -1,6 +1,7 @@
 #include "datagen.h"
 
 #include "display.h"
+#include "evaluation.h"
 #include "fens.h"
 #include "movegen.h"
 #include "search.h"
@@ -55,21 +56,23 @@ static std::ostream& operator<<(std::ostream& os, const DatagenStatsEntry& entry
 struct DatagenStats
 {
     DatagenStatsEntry total{};
+    DatagenStatsEntry win_by_elimination{};
     DatagenStatsEntry discarded_repetition{};
 
     DatagenStats& operator+=(const DatagenStats& other)
     {
         total += other.total;
+        win_by_elimination += other.win_by_elimination;
         discarded_repetition += other.discarded_repetition;
         return *this;
     }
 };
 
-static constexpr uint64_t seed_base = 1;
-static constexpr ThreadCount thread_count = 1;
+static constexpr uint64_t seed_base = 0;
+static constexpr ThreadCount thread_count = 12;
 static const Position initial_pos = Fens::parse(initial_fen);
 
-void write_result(ostream& stream, const DatagenResult& result)
+void write_result_bin(ostream& stream, const DatagenResult& result)
 {
     stream.write(reinterpret_cast<const char*>(&result.position.Bitboards[Pieces::White]), sizeof(Bitboard));
     stream.write(reinterpret_cast<const char*>(&result.position.Bitboards[Pieces::Black]), sizeof(Bitboard));
@@ -79,11 +82,27 @@ void write_result(ostream& stream, const DatagenResult& result)
     //stream.write("\n\n", 2);
 }
 
-void write_results(ostream& stream, const vector<DatagenResult>& results)
+void write_results_bin(ostream& stream, const vector<DatagenResult>& results)
 {
     for(const DatagenResult& result : results)
     {
-        write_result(stream, result);
+        write_result_bin(stream, result);
+    }
+    stream.flush();
+}
+
+void write_result_epd(ostream& stream, const DatagenResult& result)
+{
+    Fens::serialize(result.position, stream);
+    const auto wdl_float = static_cast<float>(result.wdl) / 2;
+    stream << "; " << wdl_float << endl;
+}
+
+void write_results_epd(ostream& stream, const vector<DatagenResult>& results)
+{
+    for (const DatagenResult& result : results)
+    {
+        write_result_epd(stream, result);
     }
     stream.flush();
 }
@@ -101,30 +120,21 @@ optional<Wdl> adjudicate(const Position& pos)
         const auto opp_count = pop_count(pos.Bitboards[!pos.Turn]);
         if (own_count > opp_count)
         {
-            return 1;
+            return 2;
         }
         if (own_count < opp_count)
         {
             return 0;
         }
 
-        return 0.5;
+        return 1;
     }
 
     return nullopt;
 }
 
-
-void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search& search, mutex& mut, DatagenStats& thread_stats, vector<DatagenResult>& thread_results, vector<DatagenResult>& iteration_results)
+void do_random_moves(Position& pos, mt19937_64& rng)
 {
-    const uint64_t seed = seed_base * 1'000'000'000'000ULL + static_cast<uint64_t>(thread_id) * 1'000'000'000ULL + iteration;
-    auto rng = mt19937_64(seed);
-    //cout << iteration << endl;
-
-    auto iteration_stats_entry = DatagenStatsEntry{};
-    iteration_stats_entry.games = 1;
-
-    Position pos;
     bool generate_initial_position = true;
     const MoveCount random_move_count = rng() % 2 == 0 ? 8 : 9;
     while (generate_initial_position)
@@ -148,7 +158,7 @@ void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search
             if (move_count == 0)
             {
                 const auto is_terminal = pos.is_terminal();
-                if(is_terminal)
+                if (is_terminal)
                 {
                     break;
                 }
@@ -156,16 +166,58 @@ void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search
                 MoveGenerator::generate_all(pos, moves, move_count);
             }
 
+            //for (MoveCount j = 0; j < move_count; j++)
+            //{
+            //    const auto move = moves[j];
+            //    cout << move.to_move_str() << " ";
+            //}
+
             const auto move_index = rng() % move_count;
             const auto move = moves[move_index];
             pos.make_move_in_place(move);
         }
-
         generate_initial_position = pos.is_terminal();
     }
-    assert(!pos.is_terminal());
+}
 
-    auto copy = pos;
+void place_random_pieces(Position& pos, mt19937_64& rng)
+{
+    pos = initial_pos;
+    for(Color color = Colors::White; color < Colors::Count; color++)
+    {
+        while(pop_count(pos.Bitboards[color]) < 5)
+        {
+            const auto file = rng() % 7;
+            const auto rank = rng() % 7;
+            const auto sq = get_square(file, rank);
+            const auto bb = get_bitboard(sq);
+            if(!(pos.Bitboards[Pieces::Empty] & bb))
+            {
+                continue;
+            }
+
+            pos.Squares[sq] = color;
+            pos.Bitboards[color] |= bb;
+            pos.Bitboards[Pieces::Empty] &= ~bb;
+        }
+    }
+}
+
+void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search& search, mutex& mut, DatagenStats& thread_stats, vector<DatagenResult>& thread_results, vector<DatagenResult>& iteration_results)
+{
+    const uint64_t seed = seed_base * 1'000'000'000'000ULL + static_cast<uint64_t>(thread_id) * 1'000'000'000ULL + iteration;
+    auto rng = mt19937_64(seed);
+    //cout << iteration << endl;
+
+    auto iteration_stats_entry = DatagenStatsEntry{};
+    iteration_stats_entry.games = 1;
+
+    Position pos;
+
+    do_random_moves(pos, rng);
+    //place_random_pieces(pos, rng);
+
+    assert(!pos.is_terminal());
 
     //pos = Fens::parse("x1x4/1x5/x5o/7/7/2o3x/oo4x x");
     search.state.table.clear();
@@ -211,17 +263,13 @@ void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search
     Wdl wdl = adj_result.value();
     if (pos.Turn == Colors::Black)
     {
-        wdl = 1 - wdl;
-    }
-    else
-    {
-        auto a = 123;
+        wdl = 2 - wdl;
     }
 
     Wdl wdl2;
     if(pop_count(pos.Bitboards[Pieces::White]) > pop_count(pos.Bitboards[Pieces::Black]))
     {
-        wdl2 = 1;
+        wdl2 = 2;
     }
     else if(pop_count(pos.Bitboards[Pieces::White]) < pop_count(pos.Bitboards[Pieces::Black]))
     {
@@ -229,15 +277,17 @@ void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search
     }
     else
     {
-        wdl2 = 0.5;
+        wdl2 = 1;
     }
 
-    //assert(wdl == wdl2);
+    assert(wdl == wdl2);
     if(wdl != wdl2)
     {
         cout << "ARGH";
         throw "A";
     }
+
+    const bool is_elimination = pos.Bitboards[Pieces::Empty] != 0;
 
     for (DatagenResult& result : iteration_results)
     {
@@ -247,6 +297,10 @@ void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search
     {
         lock_guard lock(mut);
         thread_stats.total += iteration_stats_entry;
+        if(is_elimination)
+        {
+            thread_stats.win_by_elimination += iteration_stats_entry;
+        }
         thread_results.insert(thread_results.end(), iteration_results.begin(), iteration_results.end());
     }
     iteration_results.clear();
@@ -259,7 +313,14 @@ static void run_thread(ThreadCount thread_id, mutex& mut, DatagenStats& thread_s
     vector<DatagenResult> iteration_results;
     for(uint64_t iteration = 0; iteration < 1'000'000'000'000; iteration++)
     {
-        run_iteration(thread_id, iteration, search, mut, thread_stats, thread_results, iteration_results);
+        try
+        {
+            run_iteration(thread_id, iteration, search, mut, thread_stats, thread_results, iteration_results);
+        }
+        catch(...)
+        {
+            cout << "ERROR" << thread_id << " " << iteration << endl;
+        }
     }
 }
 
@@ -276,13 +337,16 @@ static void print_stats(const DatagenStats& stats, time_point<high_resolution_cl
 
     const auto pps = static_cast<double>(stats.total.positions) / elapsedSecondCount;
     const auto pps_int = static_cast<size_t>(pps);
+
     const auto discarded_percent = (static_cast<double>(stats.discarded_repetition.positions) / static_cast<double>(stats.total.positions)) * 100;
+    const auto eliminations_percent = (static_cast<double>(stats.win_by_elimination.games) / static_cast<double>(stats.total.games)) * 100;
 
     auto ss = stringstream();
     ss << " Games: " << std::right << std::setw(4) << stats.total.games;
     ss << " Positions: " << std::right << std::setw(9) << stats.total.positions;
     ss << " (" << std::right << std::setw(3) << pps_int << " PPS)";
     ss << " Discarded: " << std::fixed << std::setprecision(3) << discarded_percent << "%";
+    ss << " Eliminations: " << std::fixed << std::setprecision(3) << eliminations_percent << "%";
     ss << std::endl;
 
     const auto log = ss.str();
@@ -306,12 +370,17 @@ static void run_datagen()
     }
 
 #ifdef _WIN32
-    constexpr auto out_path = "C:/shared/ataxx/data/data2.bin";
+    constexpr auto out_bin_path = "C:/shared/ataxx/data/data2.bin";
+    constexpr auto out_epd_path = "C:/shared/ataxx/data/data2.epd";
 #else
-    constexpr auto out_path = "/shared/ataxx/data/data2.bin";
+    constexpr auto out_bin_path = "/shared/ataxx/data/data2.bin";
+    constexpr auto out_epd_path = "C:/shared/ataxx/data/data2.epd";
 #endif
-    cout << "Writing results to " << out_path << endl;
-    ofstream file(out_path, std::ios::out | std::ios::binary);
+    cout << "Writing binary results to " << out_bin_path << endl;
+    ofstream bin_file(out_bin_path, std::ios::out | std::ios::binary);
+
+    cout << "Writing epd results to " << out_epd_path << endl;
+    ofstream epd_file(out_epd_path, std::ios::out);
 
     constexpr auto delay = milliseconds(1000);
     auto total_results = vector<DatagenResult>();
@@ -331,9 +400,10 @@ static void run_datagen()
             total_results.insert(total_results.end(), this_thread_results.begin(), this_thread_results.end());
             this_thread_results.clear();
         }
-        
+
         print_stats(total_stats, train_start);
-        write_results(file, total_results);
+        write_results_bin(bin_file, total_results);
+        write_results_epd(epd_file, total_results);
         total_results.clear();
     }
 }
@@ -348,4 +418,34 @@ void Datagen::run()
     {
         cout << "Datagen is not enabled";
     }
+}
+
+void Datagen::read()
+{
+    constexpr auto path = "C:/shared/ataxx/data/data_test.epd";
+    auto file = ifstream(path, ios::in);
+    if(!file.good())
+    {
+        cout << "Failed to open file: " << path << endl;
+        return;
+    }
+
+    string line;
+    while(getline(file, line))
+    {
+        if(line.empty())
+        {
+            break;
+        }
+
+        const auto pos = Fens::parse(line);
+        Display::display_position(pos);
+        cout << "WDL: " << line[line.length() - 1] << endl;
+        cout << "NNUE inner: " << EvaluationNnue::evaluate_inner(pos) << endl;
+        cout << "NNUE sigmoid: " << EvaluationNnue::evaluate_sigmoid(pos) << endl;
+        cout << "NNUE: " << EvaluationNnue::evaluate_from_pov(pos) << endl;
+
+        auto a = 123;
+    }
+    
 }

@@ -121,45 +121,43 @@ Position Fens::parse(const Fen& fen)
     return pos;
 }
 
-Fen Fens::serialize(const PositionBase& pos)
+void Fens::serialize(const PositionBase& pos, ostream& ss)
 {
-    stringstream ss;
-
-    for(Rank flipped_rank = 0; flipped_rank < 7; flipped_rank++)
+    for (Rank flipped_rank = 0; flipped_rank < 7; flipped_rank++)
     {
         const Rank rank = 6 - flipped_rank;
         File file = 0;
-        while(file < 7)
+        while (file < 7)
         {
             const auto square = get_square(file, rank);
             const auto piece = pos.Squares[square];
-            if(piece == Pieces::Empty)
+            if (piece == Pieces::Empty)
             {
                 File empty_file = 0;
-                while(file < 7 && pos.Squares[get_square(file, rank)] == Pieces::Empty)
+                while (file < 7 && pos.Squares[get_square(file, rank)] == Pieces::Empty)
                 {
                     empty_file++;
                     file++;
                 }
                 ss << to_string(empty_file);
             }
-            else if(piece == Pieces::White)
+            else if (piece == Pieces::White)
             {
                 ss << string("o");
                 file++;
             }
-            else if(piece == Pieces::Black)
+            else if (piece == Pieces::Black)
             {
                 ss << string("x");
                 file++;
             }
-            else if(piece == Pieces::Wall)
+            else if (piece == Pieces::Wall)
             {
                 ss << string("-");
                 file++;
             }
         }
-        if(rank != 0)
+        if (rank != 0)
         {
             ss << string("/");
         }
@@ -167,7 +165,12 @@ Fen Fens::serialize(const PositionBase& pos)
 
     ss << string(" ");
     ss << string(pos.Turn == Colors::White ? "o" : "x");
+}
 
+Fen Fens::serialize(const PositionBase& pos)
+{
+    stringstream ss;
+    serialize(pos, ss);
     const Fen fen = ss.str();
     return fen;
 }

@@ -211,6 +211,10 @@ void Uai::handle_input(const std::string& command)
         {
             Datagen::run();
         }
+        else if (token == "dataread" || token == "dr")
+        {
+            Datagen::read();
+        }
     }
 }
 

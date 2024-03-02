@@ -6,6 +6,7 @@
 struct Datagen
 {
     static void run();
+    static void read();
 };
 
 #endif // !DATAGEN_H

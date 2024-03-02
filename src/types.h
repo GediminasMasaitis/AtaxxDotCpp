@@ -131,7 +131,7 @@ static const Fen initial_fen = "x5o/7/7/7/7/7/o5x x 0 1";
 using MoveStr = std::string;
 
 using Ply = int8_t;
-constexpr Ply max_ply = 127;
+constexpr Ply max_ply = 64;
 template<class T>
 using EachPly = std::array<T, max_ply>;
 

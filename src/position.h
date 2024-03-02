@@ -16,6 +16,7 @@ struct PositionBase
     Bitboard playable;
 
     bool is_terminal() const;
+    bool verify_bitboards() const;
     PositionBase make_move_copy(const Move& move) const;
     PositionBase make_move_copy(const MoveStr& move_str) const;
 

@@ -20,6 +20,34 @@ bool PositionBase::is_terminal() const
     return false;
 }
 
+bool PositionBase::verify_bitboards() const
+{
+    for(Rank rank = 0; rank < 7; rank++)
+    {
+        for (File file = 0; file < 7; file++)
+        {
+            const auto sq = get_square(file, rank);
+            const auto square_bb = get_bitboard(sq);
+            for (Piece piece = Pieces::White; piece < Pieces::Count; piece++)
+            {
+                const auto is_set = Squares[sq] == piece;
+                if (is_set && !(Bitboards[piece] & square_bb))
+                {
+                    assert(false);
+                    return false;
+                }
+                if (!is_set && (Bitboards[piece] & square_bb))
+                {
+                    assert(false);
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
 PositionBase PositionBase::make_move_copy(const Move& move) const
 {
     assert(move != no_move);
@@ -31,6 +59,7 @@ PositionBase PositionBase::make_move_copy(const Move& move) const
 
     if (move == passes[move.Turn])
     {
+        assert(new_pos.verify_bitboards());
         return new_pos;
     }
 
@@ -65,6 +94,7 @@ PositionBase PositionBase::make_move_copy(const Move& move) const
         new_pos.Key ^= Zobrist.squares[!move.Turn][attacked_square];
     }
 
+    assert(new_pos.verify_bitboards());
     return new_pos;
 }
 
@@ -89,6 +119,7 @@ void Position::make_move_in_place(const Move& move)
 
     if(move == passes[move.Turn])
     {
+        assert(verify_bitboards());
         return;
     }
 
@@ -121,6 +152,7 @@ void Position::make_move_in_place(const Move& move)
         Key ^= Zobrist.squares[move.Turn][attacked_square];
         Key ^= Zobrist.squares[!move.Turn][attacked_square];
     }
+    assert(verify_bitboards());
 }
 
 void Position::make_move_in_place(const MoveStr& move_str)
@@ -142,6 +174,7 @@ void Position::unmake_move()
     assert(move.Turn == Turn);
     if(move == passes[move.Turn])
     {
+        assert(verify_bitboards());
         return;
     }
 
@@ -170,4 +203,5 @@ void Position::unmake_move()
         const auto attacked_square = pop_lsb(undo_data.captured);
         Squares[attacked_square] = !move.Turn;
     }
+    assert(verify_bitboards());
 }

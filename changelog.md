@@ -565,3 +565,77 @@ Score of AtaxxDotCpp-1.17 vs AtaxxDotCpp-1.16.1: 2704 - 2175 - 121  [0.553] 5000
 Score of AtaxxDotCpp-1.17 vs AtaxxDotCpp-1.16.1: 1746 - 1165 - 89  [0.597] 3000
 68.15 +/- 12.46
 ```
+
+### 2.0
+
+Basic NN-based evaluation, 98->1 trained on 3M positions
+
+```
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|   x   |       |       |       |       |       |   o   | 7
+| -216  |       |       |       |       |       |  219  |
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|       |       |       |       |       |       |       | 6
+|       |       |       |       |       |       |       |
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|       |       |       |       |       |       |       | 5
+|       |       |       |       |       |       |       |
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|       |       |       |       |       |       |       | 4
+|       |       |       |       |       |       |       |
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|       |       |       |       |       |       |       | 3
+|       |       |       |       |       |       |       |
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|       |       |       |       |       |       |       | 2
+|       |       |       |       |       |       |       |
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|   o   |       |       |       |       |       |   x   | 1
+|  231  |       |       |       |       |       | -232  |
++-------+-------+-------+-------+-------+-------+-------+
+    A       B       C       D       E       F       G
+
+Turn: x
+FEN: x5o/7/7/7/7/7/o5x x
+
+White: 0x0040000000000001
+Black: 0x0001000000000040
+Wall:  0x0000000000000000
+Empty: 0x003e7f7f7f7f7f3e
+Play:  0x007f7f7f7f7f7f7f
+
+Eval: -3
+```
+
+```
+info depth 1 time 1 score 183 nodes 9 nps 9000 pv b7
+info depth 2 time 1 score 2 nodes 53 nps 53000 pv b7 g6
+info depth 3 time 1 score 241 nodes 212 nps 212000 pv b7 g6 c7
+info depth 4 time 1 score -18 nodes 1942 nps 1942000 pv a6 a2 b7 a3
+info depth 5 time 1 score 244 nodes 5782 nps 5782000 pv b7 b1 f1 g6 e1
+info depth 6 time 6 score -54 nodes 24075 nps 4012500 pv f2 f7 a6 g6 e1 e7
+info depth 7 time 23 score 394 nodes 87049 nps 3784739 pv g2 f6 g3 f6d5 g4 d5b7 g4g6
+info depth 8 time 139 score -152 nodes 502835 nps 3617517 pv b6 b1 c5 c1 c4 b1b3 b4 a2
+info depth 9 time 373 score 434 nodes 1293412 nps 3467592 pv f2 g6 b7 a2 c7 a3 d7 g6e6 d6
+info depth 10 time 1301 score -150 nodes 4286902 nps 3295082 pv b6 b1 c7 f7 d6 e7 c7e6 f6 d7 e5
+info depth 11 time 2841 score 447 nodes 9156460 nps 3222970 pv b6 g6 c5 f5 d6 g6g4 c7 g4g2 d6f6 f1 e7
+info depth 12 time 11922 score -201 nodes 36313206 nps 3045898 pv b6 b2 c7 f7 d6 e7 c7e6 f6 d7 e5 e7g6 e7
+info depth 13 time 41941 score 501 nodes 126131284 nps 3007350 pv b6 b2 c7 c1 f2 d2 e3 c1e2 g1e1 e3d1 f1 e3 e1c1
+```
+
+```
+1+0.01:
+Score of AtaxxDotCpp-2.0 vs AtaxxDotCpp-1.17: 695 - 4242 - 63  [0.145] 5000
+-307.82 +/- 13.49
+
+1+0.01:
+Score of AtaxxDotCpp-2.0-classical vs AtaxxDotCpp-1.17: 956 - 995 - 49  [0.490] 2000
+-6.78 +/- 15.03
+```
