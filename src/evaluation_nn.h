@@ -7,8 +7,6 @@
 struct EvaluationNnue
 {
     static void init();
-    static float evaluate_inner(const PositionBase& pos);
-    static float evaluate_sigmoid(const PositionBase& pos);
     static Score evaluate(const PositionBase& pos);
     static Score evaluate_from_pov(const PositionBase& pos, Color color = Colors::White);
 };

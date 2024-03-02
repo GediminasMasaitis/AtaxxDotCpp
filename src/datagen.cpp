@@ -441,8 +441,6 @@ void Datagen::read()
         const auto pos = Fens::parse(line);
         Display::display_position(pos);
         cout << "WDL: " << line[line.length() - 1] << endl;
-        cout << "NNUE inner: " << EvaluationNnue::evaluate_inner(pos) << endl;
-        cout << "NNUE sigmoid: " << EvaluationNnue::evaluate_sigmoid(pos) << endl;
         cout << "NNUE: " << EvaluationNnue::evaluate_from_pov(pos) << endl;
 
         auto a = 123;

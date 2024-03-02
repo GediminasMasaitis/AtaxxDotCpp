@@ -18,7 +18,7 @@ INCBIN(network, "networks/default.nnue");
 
 constexpr size_t input_size = 98;
 
-using nnue_param_t = float;
+using nnue_param_t = int16_t;
 static std::array<nnue_param_t, input_size> weights;
 static nnue_param_t bias;
 
@@ -63,27 +63,13 @@ void EvaluationNnue::init()
     //cout << str;
 }
 
-static float sigmoid(const float val)
-{
-    float ex = exp(-val);
-    const auto res = 1 / (1 + ex);
-    return res;
-}
-
-float EvaluationNnue::evaluate_sigmoid(const PositionBase& pos)
-{
-    auto score = evaluate_inner(pos);
-    score = sigmoid(score);
-    return score;
-}
-
-float EvaluationNnue::evaluate_inner(const PositionBase& pos)
+Score EvaluationNnue::evaluate(const PositionBase& pos)
 {
     const auto is_black = pos.Turn == Colors::Black;
     const auto us = is_black ? reverse_bits(pos.Bitboards[Colors::Black]) : pos.Bitboards[Colors::White];
     const auto them = is_black ? reverse_bits(pos.Bitboards[Colors::White]) : pos.Bitboards[Colors::Black];
 
-    auto inputs = std::array<float_t, input_size>{0};
+    Score score = 0;
     for (Rank rank = 0; rank < 7; rank++)
     {
         for (File file = 0; file < 7; file++)
@@ -92,31 +78,17 @@ float EvaluationNnue::evaluate_inner(const PositionBase& pos)
             const auto index = get_index(file, rank);
             if (us & (1ULL << sq))
             {
-                inputs[index] = 1;
+                score += weights[index];
             }
             else if (them & (1ULL << sq))
             {
-                inputs[49 + index] = 1;
+                score += weights[49 + index];
             }
         }
-    }
-
-    double score = 0;
-    for (auto i = 0; i < weights.size(); i++)
-    {
-        score += inputs[i] * weights[i];
     }
     score += bias;
 
     return score;
-}
-
-Score EvaluationNnue::evaluate(const PositionBase& pos)
-{
-    auto score = evaluate_inner(pos);
-    score *= 512;
-    const auto final_score = static_cast<Score>(round(score));
-    return final_score;
 }
 
 Score EvaluationNnue::evaluate_from_pov(const PositionBase& pos, Color color)

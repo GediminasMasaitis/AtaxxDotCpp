@@ -713,7 +713,36 @@ info depth 13 time 20972 score 136 nodes 70246613 nps 3349542 pv b7 f6 c6 e5 f2 
 Score of AtaxxDotCpp-2.1 vs AtaxxDotCpp-2.0: 4565 - 394 - 41  [0.917] 5000
 417.54 +/- 17.25
 
+10+0.1:
+Score of AtaxxDotCpp-2.1 vs AtaxxDotCpp-1.17: 871 - 598 - 31  [0.591] 1500
+63.95 +/- 17.68
+
 1+0.01:
 Score of AtaxxDotCpp-2.1 vs AtaxxDotCpp-1.17: 2670 - 2245 - 85  [0.543] 5000
 29.60 +/- 9.57
+```
+
+### 2.2
+
+NN weights integer quantization
+
+```
+info depth 1 time 1 score -81 nodes 9 nps 9000 pv b7
+info depth 2 time 1 score 230 nodes 34 nps 34000 pv b7 g6
+info depth 3 time 1 score -71 nodes 225 nps 225000 pv b7 g6 c7
+info depth 4 time 1 score 205 nodes 942 nps 942000 pv g2 f7 f1 e7
+info depth 5 time 1 score -55 nodes 4702 nps 4702000 pv g2 a2 g3 b1 b7
+info depth 6 time 2 score 155 nodes 14216 nps 7108000 pv g2 g6 f1 b1 g3e1 g5f3
+info depth 7 time 9 score 55 nodes 44420 nps 4935555 pv g2 b1 g3 c1 g4 a2 g4g6
+info depth 8 time 52 score 40 nodes 254367 nps 4891673 pv f2 g6 e3 g5 f4 f5 e3g4 f6
+info depth 9 time 153 score 150 nodes 721611 nps 4716411 pv f1 b1 b7 g6 e1 g5 d1 b1d2 e2
+info depth 10 time 327 score 49 nodes 1493104 nps 4566067 pv f1 b1 e1 g6 d1 c1 e1c2 b2 d2 c3
+info depth 11 time 1038 score 129 nodes 4669904 nps 4498944 pv f2 g6 g3 b1 g3 a3 g2 a4 f4 a4a6 f4f6
+info depth 12 time 3788 score 26 nodes 16751008 nps 4422124 pv f2 g6 e1 b2 g3 f5 b7 b2d2 f2d1 f4 d2f3 g4
+info depth 13 time 24439 score 121 nodes 104440858 nps 4273532 pv a6 f6 b7 e5 c7 d6 c6 e5d7 b6 d6b5 d6 a6c5 a6
+```
+
+```
+1+0.01:
+
 ```

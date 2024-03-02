@@ -22,6 +22,7 @@ using Square = uint8_t;
 
 constexpr auto data_type_val = torch::kFloat32;
 using data_type = float_t;
+using quantized_type = int32_t;
 
 struct DataEntry
 {
@@ -176,7 +177,8 @@ struct Net : torch::nn::Module {
 
 void print_params(const Net& model)
 {
-    auto file_bin = ofstream("C:/shared/ataxx/nets/default.nnue", ios::out | ios::binary);
+    auto file_float = ofstream("C:/shared/ataxx/nets/default.nnue-floats", ios::out | ios::binary);
+    auto file_quantized = ofstream("C:/shared/ataxx/nets/default.nnue", ios::out | ios::binary);
     auto file_human = ofstream("C:/shared/ataxx/nets/default.txt", ios::out);
     stringstream ss;
     for (const auto& pair : model.named_parameters()) {
@@ -188,12 +190,14 @@ void print_params(const Net& model)
         for(auto i = 0; i < param.size(0); i++)
         {
             auto val = param[i].item<data_type>();
-            file_bin.write(reinterpret_cast<char*>(&val), sizeof(data_type));
+            file_float.write(reinterpret_cast<char*>(&val), sizeof(data_type));
 
-            const auto val_str = to_string(val);
-            file_human << val_str << " ";
-            ss << val_str << " ";
-            //ss << setprecision(5) << val << "f, ";
+            auto quantized = static_cast<quantized_type>(round(val * 512));
+            file_quantized.write(reinterpret_cast<char*>(&quantized), sizeof(quantized_type));
+
+            const auto val_human = to_string(quantized);
+            file_human << val_human << " ";
+            ss << val_human << " ";
         }
         ss << endl;
         file_human << endl;
@@ -201,7 +205,8 @@ void print_params(const Net& model)
     ss << endl;
     const auto str = ss.str();
     cout << str;
-    file_bin.flush();
+    file_float.flush();
+    file_quantized.flush();
     file_human.flush();
 }
 
