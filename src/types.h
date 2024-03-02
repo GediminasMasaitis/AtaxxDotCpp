@@ -99,6 +99,23 @@ static constexpr uint8_t pop_count(const Bitboard bitboard)
     return static_cast<uint8_t>(std::popcount(bitboard));
 }
 
+constexpr Bitboard reverse_bits(Bitboard bitboard)
+{
+    const Bitboard h1 = 0x5555555555555555;
+    const Bitboard h2 = 0x3333333333333333;
+    const Bitboard h4 = 0x0F0F0F0F0F0F0F0F;
+    const Bitboard v1 = 0x00FF00FF00FF00FF;
+    const Bitboard v2 = 0x0000FFFF0000FFFF;
+    bitboard = ((bitboard >> 1) & h1) | ((bitboard & h1) << 1);
+    bitboard = ((bitboard >> 2) & h2) | ((bitboard & h2) << 2);
+    bitboard = ((bitboard >> 4) & h4) | ((bitboard & h4) << 4);
+    bitboard = ((bitboard >> 8) & v1) | ((bitboard & v1) << 8);
+    bitboard = ((bitboard >> 16) & v2) | ((bitboard & v2) << 16);
+    bitboard = (bitboard >> 32) | (bitboard << 32);
+    bitboard >>= 9;
+    return bitboard;
+}
+
 static constexpr Bitboard available_position = 0x007F7F7F7F7F7F7FULL;
 
 static constexpr std::array<Bitboard, 8> Files =

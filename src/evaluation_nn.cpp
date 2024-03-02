@@ -9,55 +9,12 @@
 
 using namespace std;
 
-void EvaluationHce::init()
-{
-    // Nothing to do
-}
+#define ENABLE_INCBIN 0
 
-Score evaluate_color(const PositionBase& pos, Color color)
-{
-    Score score = 0;
-    auto pieces = pos.Bitboards[color];
-
-    while (pieces)
-    {
-        const auto sq = pop_lsb(pieces);
-
-        // MATERIAL
-        score += 100;
-
-        // UNATTACKABLE
-        const Bitboard empty_near_sq = Attacks.near[sq] & pos.Bitboards[Pieces::Empty];
-        if(!empty_near_sq)
-        {
-            score += 50;
-        }
-    }
-
-    return score;
-}
-
-Score EvaluationHce::evaluate(const PositionBase& pos)
-{
-    Score score = 0;
-
-    // TEMPO
-    score += 400;
-    
-    score += evaluate_color(pos, pos.Turn);
-    score -= evaluate_color(pos, !pos.Turn);
-    return score;
-}
-
-Score EvaluationHce::evaluate_from_pov(const PositionBase& pos, Color color)
-{
-    Score score = evaluate(pos);
-    if(pos.Turn != color)
-    {
-        score = static_cast<Score>(-score);
-    }
-    return score;
-}
+#if ENABLE_INCBIN
+#include "external/incbin/incbin.h"
+INCBIN(network, "networks/default.nnue");
+#endif
 
 using nnue_param_t = float;
 static std::array<nnue_param_t, 98> weights;
@@ -70,22 +27,28 @@ static constexpr Square get_index(const File file, const Rank rank)
 
 void EvaluationNnue::init()
 {
-#ifdef _WIN32
-    constexpr auto path = "C:/shared/ataxx/nets/current.bin";
+#if ENABLE_INCBIN
+    auto file = stringstream(ios::in | ios::out | ios::binary);
+    file.write(reinterpret_cast<const char*>(gnetworkData), gnetworkSize);
 #else
-    constexpr auto path = "/mnt/c/shared/ataxx/nets/current.bin";
-#endif
+    #ifdef _WIN32
+        constexpr auto path = "C:/shared/ataxx/nets/default.nnue";
+    #else
+        constexpr auto path = "/mnt/c/shared/ataxx/nets/default.nnue";
+    #endif
+    //constexpr auto path = "./networks/default.nnue";
+    cout << "Reading NNUE from " << path << endl;
     auto file = ifstream(path, ios::binary);
-    if(!file.good())
+    if (!file.good())
     {
         cout << "Failed to open " << path << endl;
         return;
     }
+#endif
 
     auto ss = stringstream();
-    ss << "Reading NNUE from " << path << endl;
     ss << "Weights: ";
-    for(auto i = 0; i < weights.size(); i++)
+    for (auto i = 0; i < weights.size(); i++)
     {
         file.read(reinterpret_cast<char*>(&weights[i]), sizeof(nnue_param_t));
         ss << weights[i] << " ";
@@ -114,9 +77,9 @@ float EvaluationNnue::evaluate_sigmoid(const PositionBase& pos)
 float EvaluationNnue::evaluate_inner(const PositionBase& pos)
 {
     auto inputs = std::array<float_t, 98>{0};
-    for(Rank rank = 0; rank < 7; rank++)
+    for (Rank rank = 0; rank < 7; rank++)
     {
-        for(File file = 0; file < 7; file++)
+        for (File file = 0; file < 7; file++)
         {
             const auto sq = get_square(file, rank);
             const auto index = get_index(file, rank);

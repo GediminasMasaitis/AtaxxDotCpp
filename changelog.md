@@ -635,6 +635,10 @@ info depth 13 time 41941 score 501 nodes 126131284 nps 3007350 pv b6 b2 c7 c1 f2
 Score of AtaxxDotCpp-2.0 vs AtaxxDotCpp-1.17: 695 - 4242 - 63  [0.145] 5000
 -307.82 +/- 13.49
 
+10+0.1:
+Score of AtaxxDotCpp-2.0 vs AtaxxDotCpp-1.17: 190 - 802 - 8  [0.194] 1000
+-247.41 +/- 27.13
+
 1+0.01:
 Score of AtaxxDotCpp-2.0-classical vs AtaxxDotCpp-1.17: 956 - 995 - 49  [0.490] 2000
 -6.78 +/- 15.03
