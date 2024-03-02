@@ -57,6 +57,23 @@ constexpr int32_t input_size = 98;
 using InputData = std::array<data_type, input_size>;
 using OutputData = std::array<data_type, 1>;
 
+constexpr Bitboard reverse_bits(Bitboard bitboard)
+{
+    const Bitboard h1 = 0x5555555555555555;
+    const Bitboard h2 = 0x3333333333333333;
+    const Bitboard h4 = 0x0F0F0F0F0F0F0F0F;
+    const Bitboard v1 = 0x00FF00FF00FF00FF;
+    const Bitboard v2 = 0x0000FFFF0000FFFF;
+    bitboard = ((bitboard >> 1) & h1) | ((bitboard & h1) << 1);
+    bitboard = ((bitboard >> 2) & h2) | ((bitboard & h2) << 2);
+    bitboard = ((bitboard >> 4) & h4) | ((bitboard & h4) << 4);
+    bitboard = ((bitboard >> 8) & v1) | ((bitboard & v1) << 8);
+    bitboard = ((bitboard >> 16) & v2) | ((bitboard & v2) << 16);
+    bitboard = (bitboard >> 32) | (bitboard << 32);
+    bitboard >>= 9;
+    return bitboard;
+}
+
 class MyDataset : public torch::data::Dataset<MyDataset>
 {
 public:
@@ -94,8 +111,13 @@ public:
         for(size_t entry_index = 0; entry_index < entry_count; entry_index++)
         {
             const auto entry = read_entry(stream);
+            
             auto& input_data = inputs_data[entry_index];
             auto& output_data = outputs_data[entry_index];
+
+            const auto is_black = entry.turn == 1;
+            const auto us = is_black ? reverse_bits(entry.black) : entry.white;
+            const auto them = is_black ? reverse_bits(entry.white) : entry.black;
 
             for(Rank rank = 0; rank < 7; rank++)
             {
@@ -103,20 +125,15 @@ public:
                 {
                     const auto square = get_square(file, rank);
                     const auto index = get_index(file, rank);
-                    input_data[index] = static_cast<data_type>((entry.white >> square) & 1);
-                    input_data[49 + index] = static_cast<data_type>((entry.black >> square) & 1);
+                    input_data[index] = static_cast<data_type>((us >> square) & 1);
+                    input_data[49 + index] = static_cast<data_type>((them >> square) & 1);
                 }
             }
 
-            output_data[0] = static_cast<data_type>(entry.wdl) / 2;
+            const auto wdl = is_black ? static_cast<data_type>(2 - entry.wdl) / 2 : static_cast<data_type>(entry.wdl) / 2;
+            output_data[0] = wdl;
             auto input = torch::from_blob(input_data.data(), { input_size }, tensor_options);
             auto target = torch::from_blob(output_data.data(), { 1 }, tensor_options);
-
-            //for (auto i = 0; i < input_size; i++)
-            //{
-            //    cout << input_data[i];
-            //}
-            //cout << " " << output_data[0] << endl;
 
             inputs.push_back(input);
             targets.push_back(target);
@@ -159,8 +176,8 @@ struct Net : torch::nn::Module {
 
 void print_params(const Net& model)
 {
-    auto file_bin = ofstream("C:/shared/ataxx/nets/current.bin", ios::out | ios::binary);
-    auto file_human = ofstream("C:/shared/ataxx/nets/current.txt", ios::out);
+    auto file_bin = ofstream("C:/shared/ataxx/nets/default.nnue", ios::out | ios::binary);
+    auto file_human = ofstream("C:/shared/ataxx/nets/default.txt", ios::out);
     stringstream ss;
     for (const auto& pair : model.named_parameters()) {
         auto& name = pair.key();
@@ -290,10 +307,6 @@ int main()
     ss << endl << endl;
     auto str = ss.str();
     cout << str;
-
-    //const auto batch_size = 4;
-    //const auto data_loader_options = torch::data::DataLoaderOptions(batch_size);
-    //auto data_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler, MyDataset>(data_set, batch_size);
 
     return 0;
 }

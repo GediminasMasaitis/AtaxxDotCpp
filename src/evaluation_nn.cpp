@@ -9,15 +9,17 @@
 
 using namespace std;
 
-#define ENABLE_INCBIN 0
+#define ENABLE_INCBIN 1
 
 #if ENABLE_INCBIN
 #include "external/incbin/incbin.h"
 INCBIN(network, "networks/default.nnue");
 #endif
 
+constexpr size_t input_size = 98;
+
 using nnue_param_t = float;
-static std::array<nnue_param_t, 98> weights;
+static std::array<nnue_param_t, input_size> weights;
 static nnue_param_t bias;
 
 static constexpr Square get_index(const File file, const Rank rank)
@@ -30,6 +32,7 @@ void EvaluationNnue::init()
 #if ENABLE_INCBIN
     auto file = stringstream(ios::in | ios::out | ios::binary);
     file.write(reinterpret_cast<const char*>(gnetworkData), gnetworkSize);
+    cout << "Using included NNUE" << endl;
 #else
     #ifdef _WIN32
         constexpr auto path = "C:/shared/ataxx/nets/default.nnue";
@@ -76,18 +79,22 @@ float EvaluationNnue::evaluate_sigmoid(const PositionBase& pos)
 
 float EvaluationNnue::evaluate_inner(const PositionBase& pos)
 {
-    auto inputs = std::array<float_t, 98>{0};
+    const auto is_black = pos.Turn == Colors::Black;
+    const auto us = is_black ? reverse_bits(pos.Bitboards[Colors::Black]) : pos.Bitboards[Colors::White];
+    const auto them = is_black ? reverse_bits(pos.Bitboards[Colors::White]) : pos.Bitboards[Colors::Black];
+
+    auto inputs = std::array<float_t, input_size>{0};
     for (Rank rank = 0; rank < 7; rank++)
     {
         for (File file = 0; file < 7; file++)
         {
             const auto sq = get_square(file, rank);
             const auto index = get_index(file, rank);
-            if (pos.Bitboards[Pieces::White] & (1ULL << sq))
+            if (us & (1ULL << sq))
             {
                 inputs[index] = 1;
             }
-            else if (pos.Bitboards[Pieces::Black] & (1ULL << sq))
+            else if (them & (1ULL << sq))
             {
                 inputs[49 + index] = 1;
             }
@@ -101,18 +108,13 @@ float EvaluationNnue::evaluate_inner(const PositionBase& pos)
     }
     score += bias;
 
-    if (pos.Turn == Colors::Black)
-    {
-        score = -score;
-    }
-
     return score;
 }
 
 Score EvaluationNnue::evaluate(const PositionBase& pos)
 {
     auto score = evaluate_inner(pos);
-    score *= 1024;
+    score *= 512;
     const auto final_score = static_cast<Score>(round(score));
     return final_score;
 }
