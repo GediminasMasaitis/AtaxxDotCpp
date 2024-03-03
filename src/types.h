@@ -9,6 +9,13 @@
 #include <stdexcept>
 #include <string>
 
+#define NNUE 1
+#if NNUE
+constexpr bool do_nnue = true;
+#else
+constexpr bool do_nnue = false;
+#endif
+
 #define DATAGEN 0
 #if DATAGEN
 constexpr bool do_datagen = true;

@@ -4,7 +4,10 @@
 #include "evaluation_hce.h"
 #include "evaluation_nn.h"
 
-//using Evaluation = EvaluationHce;
+#if NNUE
 using Evaluation = EvaluationNnue;
+#else
+using Evaluation = EvaluationHce;
+#endif
 
 #endif // !EVALUATION_H

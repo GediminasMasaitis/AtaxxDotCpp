@@ -1,6 +1,6 @@
 #include "uai.h"
 
-#include "evaluation.h"
+#include "evaluation_nn_base.h"
 
 #include <iostream>
 
@@ -10,7 +10,7 @@ int main()
 {
     cout << "ataxx.cpp by Gediminas Masaitis" << endl;
 
-    Evaluation::init();
+    EvaluationNnueBase::init();
 
     Uai uai;
     uai.run();
