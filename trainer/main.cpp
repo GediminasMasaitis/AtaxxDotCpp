@@ -22,7 +22,7 @@ using Square = uint8_t;
 
 constexpr auto data_type_val = torch::kFloat32;
 using data_type = float_t;
-using quantized_type = int32_t;
+using quantized_type = int16_t;
 
 struct DataEntry
 {
@@ -55,6 +55,7 @@ static constexpr Square get_index(const File file, const Rank rank)
 }
 
 constexpr int32_t input_size = 98;
+constexpr int32_t hidden_size = 16;
 using InputData = std::array<data_type, input_size>;
 using OutputData = std::array<data_type, 1>;
 
@@ -84,7 +85,7 @@ public:
     vector<torch::Tensor> inputs;
     vector<torch::Tensor> targets;
 
-    explicit MyDataset(const string& path)
+    explicit MyDataset(const string& path, int limit = -1)
     {
         const auto size = filesystem::file_size(filesystem::path(path));
         constexpr auto entry_size = sizeof(Bitboard) + sizeof(Bitboard) + sizeof(Color) + sizeof(Wdl) + sizeof(Score);
@@ -138,6 +139,16 @@ public:
 
             inputs.push_back(input);
             targets.push_back(target);
+
+            if(entry_index % 1000000 == 0)
+            {
+                cout << "Loaded " << entry_index << " entries" << endl;
+            }
+
+            if(entry_index == limit)
+            {
+                break;
+            }
         }
     }
 
@@ -158,19 +169,28 @@ public:
 
 struct Net : torch::nn::Module {
     torch::nn::Linear fc1{ nullptr };
+    torch::nn::Linear fc2{ nullptr };
 
     Net() {
-        fc1 = register_module("fc1", torch::nn::Linear(input_size, 1));
+        fc1 = register_module("fc1", torch::nn::Linear(input_size, hidden_size));
+        fc2 = register_module("fc2", torch::nn::Linear(hidden_size, 1));
     }
 
     torch::Tensor forward(torch::Tensor x) {
-        x = torch::sigmoid(fc1->forward(x.reshape({ x.size(0), input_size })));
+        x = x.reshape({ x.size(0), input_size });
+        x = fc1->forward(x);
+        x = torch::relu(x);
+        x = fc2->forward(x);
+        x = torch::sigmoid(x);
         return x;
     }
 
     torch::Tensor forward_no_sig(torch::Tensor x)
     {
-        x = fc1->forward(x.reshape({ x.size(0), input_size }));
+        x = x.reshape({ x.size(0), input_size });
+        x = fc1->forward(x);
+        x = torch::relu(x);
+        x = fc2->forward(x);
         return x;
     }
 };
@@ -184,15 +204,26 @@ void print_params(const Net& model)
     for (const auto& pair : model.named_parameters()) {
         auto& name = pair.key();
         auto param = pair.value().reshape(-1);
+        cout << name << ": " << pair.value().sizes() << endl;
+        cout << name << ": " << param.sizes() << endl;
         ss << name << endl;
         file_human << name << endl;
-        cout << param.size(0);
-        for(auto i = 0; i < param.size(0); i++)
+        for (auto i = 0; i < param.size(0); i++)
         {
             auto val = param[i].item<data_type>();
             file_float.write(reinterpret_cast<char*>(&val), sizeof(data_type));
 
-            auto quantized = static_cast<quantized_type>(round(val * 512));
+            float rounded = round(val * 512);
+            if(rounded < -32768)
+            {
+                cout << "TOO SMALL";
+            }
+            else if (rounded > 32767)
+            {
+                cout << "TOO BIG";
+            }
+
+            auto quantized = static_cast<quantized_type>(rounded);
             file_quantized.write(reinterpret_cast<char*>(&quantized), sizeof(quantized_type));
 
             const auto val_human = to_string(quantized);
@@ -212,8 +243,8 @@ void print_params(const Net& model)
 
 int main()
 {
-    //constexpr int32_t batch_size = 1024 * 128;
-    constexpr int32_t batch_size = 1024 * 32;
+    constexpr int32_t batch_size = 1024 * 128;
+    //constexpr int32_t batch_size = 1024 * 32;
     //constexpr int32_t batch_size = 128;
 
     constexpr auto test_path = "C:/shared/ataxx/data/data_test.bin";
@@ -225,10 +256,13 @@ int main()
     const auto test_load_ms = chrono::duration_cast<chrono::milliseconds>(test_load_end - test_load_start);
     cout << "Loaded test set in " << test_load_ms.count() << "ms" << endl;
 
-    constexpr auto train_path = "C:/shared/ataxx/data/data3M.bin";
+    constexpr auto train_path = "C:/shared/ataxx/data/data52M.bin";
+    //constexpr auto train_path = "C:/shared/ataxx/data/data3M.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data_train_small.bin";
+    constexpr auto limit = 10'000'000;
+    //constexpr auto limit = -1;
     const auto train_load_start = chrono::high_resolution_clock::now();
-    auto train_set = MyDataset(train_path).map(torch::data::transforms::Stack<>());
+    auto train_set = MyDataset(train_path, limit).map(torch::data::transforms::Stack<>());
     auto train_size = train_set.size().value();
     auto train_loader = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(std::move(train_set), torch::data::DataLoaderOptions(batch_size));
     const auto train_load_end = chrono::high_resolution_clock::now();
@@ -242,7 +276,7 @@ int main()
 
     data_type total_train_loss = 0.0;
     data_type total_test_loss = 0.0;
-    for(auto epoch = 0; epoch < 20; epoch++)
+    for(auto epoch = 0; epoch < 30; epoch++)
     {
         for (auto& batch : *train_loader)
         {

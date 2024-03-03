@@ -403,7 +403,7 @@ static void run_datagen()
 
         print_stats(total_stats, train_start);
         write_results_bin(bin_file, total_results);
-        write_results_epd(epd_file, total_results);
+        //write_results_epd(epd_file, total_results);
         total_results.clear();
     }
 }

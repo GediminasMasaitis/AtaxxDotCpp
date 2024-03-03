@@ -744,5 +744,80 @@ info depth 13 time 24439 score 121 nodes 104440858 nps 4273532 pv a6 f6 b7 e5 c7
 
 ```
 1+0.01:
+Score of AtaxxDotCpp-2.2 vs AtaxxDotCpp-2.1: 2892 - 2000 - 108  [0.589] 5000
+62.65 +/- 9.67
 
+1+0.01
+Score of AtaxxDotCpp-2.2 vs Tiktaxx-tryhard: 2627 - 2255 - 118  [0.537] 5000
+25.90 +/- 9.53
+```
+
+### 2.3
+
+Relative NN evaluaion architecture 98->16->1 trained on 10M positions
+
+```
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|   x   |       |       |       |       |       |   o   | 7
+|  -84  |       |       |       |       |       |  -10  |
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|       |       |       |       |       |       |       | 6
+|       |       |       |       |       |       |       |
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|       |       |       |       |       |       |       | 5
+|       |       |       |       |       |       |       |
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|       |       |       |       |       |       |       | 4
+|       |       |       |       |       |       |       |
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|       |       |       |       |       |       |       | 3
+|       |       |       |       |       |       |       |
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|       |       |       |       |       |       |       | 2
+|       |       |       |       |       |       |       |
++-------+-------+-------+-------+-------+-------+-------+
+|       |       |       |       |       |       |       |
+|   o   |       |       |       |       |       |   x   | 1
+|  -7   |       |       |       |       |       |  -80  |
++-------+-------+-------+-------+-------+-------+-------+
+    A       B       C       D       E       F       G
+
+Turn: x
+FEN: x5o/7/7/7/7/7/o5x x
+
+White: 0x0040000000000001
+Black: 0x0001000000000040
+Wall:  0x0000000000000000
+Empty: 0x003e7f7f7f7f7f3e
+Play:  0x007f7f7f7f7f7f7f
+
+Eval: -95
+```
+
+```
+info depth 1 time 1 score 21 nodes 9 nps 9000 pv b6
+info depth 2 time 1 score 90 nodes 75 nps 75000 pv b7 b2
+info depth 3 time 1 score -14 nodes 313 nps 313000 pv b7 b1 b6
+info depth 4 time 1 score 85 nodes 1177 nps 1177000 pv b7 b2 f2 c3
+info depth 5 time 1 score 3 nodes 4039 nps 4039000 pv b7 b2 c7 a2 d7
+info depth 6 time 9 score 68 nodes 40115 nps 4457222 pv a6 g7e5 b7 e5g4 g1f3 a1c3
+info depth 7 time 28 score 9 nodes 123865 nps 4423750 pv b7 b2 a6 a2 c7 a3 d7
+info depth 8 time 103 score 57 nodes 421517 nps 4092398 pv f2 f7 e3 b2 e3c3 a1b3 g2 a2
+info depth 9 time 503 score 39 nodes 1952540 nps 3881789 pv b7 b2 c6 a3 d7 a4 b5 b4 a7a5
+info depth 10 time 1815 score 34 nodes 6664406 nps 3671849 pv b6 f6 f2 b2 c7 d5 c7e5 g7f5 d5e7 e5f7
+info depth 11 time 4072 score 44 nodes 14542637 nps 3571374 pv b6 b1 c5 a2 d6 b1d1 c7 d1f1 e7 b4 f6
+info depth 12 time 16341 score 28 nodes 55719029 nps 3409768 pv b6 f6 c5 e6 c5e5 g7f5 b6d6 e6 b5d7 d5 c6 e5c7
+info depth 13 time 98777 score 19 nodes 324475474 nps 3284929 pv b6 b2 c5 c3 c7 d4 b6c4 b2b4 d4b5 b3 b6 c4a6 b7
+```
+
+```
+1+0.01:
+Score of AtaxxDotCpp-2.3 vs AtaxxDotCpp-2.2: 2448 - 2427 - 125  [0.502] 5000
+1.46 +/- 9.50
 ```
