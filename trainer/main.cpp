@@ -55,7 +55,7 @@ static constexpr Square get_index(const File file, const Rank rank)
 }
 
 constexpr int32_t input_size = 98;
-constexpr int32_t hidden_size = 16;
+constexpr int32_t hidden_size = 32;
 using InputData = std::array<data_type, input_size>;
 using OutputData = std::array<data_type, 1>;
 
@@ -241,49 +241,69 @@ void print_params(const Net& model)
     file_human.flush();
 }
 
+void print_time(chrono::time_point<chrono::high_resolution_clock> start)
+{
+    const auto end = chrono::high_resolution_clock::now();
+    const auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    cout << "[" << duration.count() << "ms] ";
+}
+
 int main()
 {
+    const auto start = chrono::high_resolution_clock::now();
+
+    //auto a = at::get_num_threads();
+    //auto b = at::get_thread_num();
+    //auto c = torch::get_num_threads();
+    //auto d = torch::get_num_interop_threads();
+
+    //cout << a << " " << b << " " << c << " " << d << endl;
+
+    auto device = torch::Device(torch::kCPU);
+    //auto device = torch::Device(torch::kCUDA);
+
     constexpr int32_t batch_size = 1024 * 128;
     //constexpr int32_t batch_size = 1024 * 32;
     //constexpr int32_t batch_size = 128;
 
     constexpr auto test_path = "C:/shared/ataxx/data/data_test.bin";
-    const auto test_load_start = chrono::high_resolution_clock::now();
     auto test_set = MyDataset(test_path).map(torch::data::transforms::Stack<>());
     auto test_size = test_set.size().value();
     auto test_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(std::move(test_set), torch::data::DataLoaderOptions(batch_size));
-    const auto test_load_end = chrono::high_resolution_clock::now();
-    const auto test_load_ms = chrono::duration_cast<chrono::milliseconds>(test_load_end - test_load_start);
-    cout << "Loaded test set in " << test_load_ms.count() << "ms" << endl;
+    print_time(start);
+    cout << "Loaded test set" << endl;
 
     constexpr auto train_path = "C:/shared/ataxx/data/data52M.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data3M.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data_train_small.bin";
     constexpr auto limit = 10'000'000;
     //constexpr auto limit = -1;
-    const auto train_load_start = chrono::high_resolution_clock::now();
     auto train_set = MyDataset(train_path, limit).map(torch::data::transforms::Stack<>());
     auto train_size = train_set.size().value();
     auto train_loader = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(std::move(train_set), torch::data::DataLoaderOptions(batch_size));
-    const auto train_load_end = chrono::high_resolution_clock::now();
-    const auto train_load_ms = chrono::duration_cast<chrono::milliseconds>(train_load_end - train_load_start);
-    cout << "Loaded training set in " << train_load_ms.count() << "ms" << endl;
+    print_time(start);
+    cout << "Loaded training set" << endl;
 
     auto net = Net();
+    net.to(device);
+
     auto adam_options = torch::optim::AdamOptions(0.001);
     auto optimizer = torch::optim::Adam(net.parameters(), adam_options);
     auto criterion = torch::nn::MSELoss();
 
     data_type total_train_loss = 0.0;
     data_type total_test_loss = 0.0;
-    for(auto epoch = 0; epoch < 30; epoch++)
+    for(auto epoch = 0; epoch < 50; epoch++)
     {
         for (auto& batch : *train_loader)
         {
+            auto data = batch.data.to(device);
+            auto target = batch.target.to(device);
+
             optimizer.zero_grad();
 
-            torch::Tensor prediction = net.forward(batch.data);
-            auto loss = criterion->forward(prediction, batch.target);
+            torch::Tensor prediction = net.forward(data);
+            auto loss = criterion->forward(prediction, target);
 
             loss.backward();
             optimizer.step();
@@ -296,17 +316,20 @@ int main()
         torch::NoGradGuard no_grad;
         for (auto& batch : *test_loader)
         {
-            torch::Tensor prediction = net.forward(batch.data);
-            auto loss = criterion->forward(prediction, batch.target);
+            auto data = batch.data.to(device);
+            auto target = batch.target.to(device);
+
+            torch::Tensor prediction = net.forward(data);
+            auto loss = criterion->forward(prediction, target);
 
             const auto this_batch_size = batch.data.size(0);
             const auto this_loss = loss.item<data_type>();
             total_test_loss += this_loss * this_batch_size;
         }
-
         const auto average_train_loss = total_train_loss / train_size;
         const auto average_test_loss = total_test_loss / test_size;
-        std::cout << "Epoch: " << epoch << " | Train loss: " << average_train_loss << " | Test loss: " << average_test_loss << std::endl;
+        print_time(start);
+        cout << "Epoch: " << epoch << " | Train loss: " << average_train_loss << " | Test loss: " << average_test_loss << std::endl;
         total_train_loss = 0;
         total_test_loss = 0;
     }

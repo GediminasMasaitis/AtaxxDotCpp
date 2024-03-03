@@ -8,7 +8,7 @@ struct EvaluationNnueBase
     using nnue_count_t = int32_t;
 
     static constexpr nnue_count_t input_size = 98;
-    static constexpr nnue_count_t hidden_size = 16;
+    static constexpr nnue_count_t hidden_size = 32;
 
     using nnue_param_t = int16_t;
     using input_weights_t = std::array<std::array<nnue_param_t, hidden_size>, input_size>;
