@@ -55,7 +55,7 @@ static constexpr Square get_index(const File file, const Rank rank)
 }
 
 constexpr int32_t input_size = 98;
-constexpr int32_t hidden_size = 32;
+constexpr int32_t hidden_size = 128;
 using InputData = std::array<data_type, input_size>;
 using OutputData = std::array<data_type, 1>;
 
