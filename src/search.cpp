@@ -64,7 +64,7 @@ Score Search::alpha_beta(Position& pos, const Ply depth, const Ply ply, Score al
     }
 
     // REVERSE FUTILITY PRUNING
-    if(!is_pv && depth < 7 && static_eval - 150 * depth > beta)
+    if(!is_pv && depth < 7 && static_eval - 100 * depth > beta)
     {
         return beta;
     }
