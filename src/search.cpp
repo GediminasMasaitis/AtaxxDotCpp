@@ -12,7 +12,7 @@ using namespace std;
 
 constexpr bool print_info = !do_datagen;
 
-Score Search::alpha_beta(PositionBase& pos, const Ply depth, const Ply ply, Score alpha, const Score beta, const bool is_pv)
+Score Search::alpha_beta(Position& pos, const Ply depth, const Ply ply, Score alpha, const Score beta, const bool is_pv)
 {
     auto& ply_state = state.plies[ply];
 
@@ -83,7 +83,7 @@ Score Search::alpha_beta(PositionBase& pos, const Ply depth, const Ply ply, Scor
         MoveOrder::order_next_move(moves, move_scores, move_count, move_index);
 
         const auto& move = moves[move_index];
-        auto npos = pos.make_move_copy(move);
+        pos.make_move_in_place(move);
         state.nodes++;
 
         // PRINCIPAL VARIATION SEARCH
@@ -91,13 +91,13 @@ Score Search::alpha_beta(PositionBase& pos, const Ply depth, const Ply ply, Scor
         if(move_index > 0)
         {
             auto reduction = move_index > 8 && depth > 4 ? 2 : 0;
-            score = -alpha_beta(npos, depth - 1 - reduction, ply + 1, -alpha - 1, -alpha, false);
+            score = -alpha_beta(pos, depth - 1 - reduction, ply + 1, -alpha - 1, -alpha, false);
         }
         if(move_index == 0 || (score > alpha && score < beta))
         {
-            score = -alpha_beta(npos, depth - 1, ply + 1, -beta, -alpha, true);
+            score = -alpha_beta(pos, depth - 1, ply + 1, -beta, -alpha, true);
         }
-        //pos.unmake_move();
+        pos.unmake_move();
 
         if(score > best_score)
         {
@@ -153,7 +153,7 @@ Score Search::alpha_beta(PositionBase& pos, const Ply depth, const Ply ply, Scor
     return best_score;
 }
 
-SearchResult Search::iteratively_deepen(PositionBase& pos)
+SearchResult Search::iteratively_deepen(Position& pos)
 {
     Score score = 0;
     for(int depth = 1; depth <= max_ply; ++depth)
@@ -205,7 +205,7 @@ SearchResult Search::iteratively_deepen(PositionBase& pos)
     return result;
 }
 
-SearchResult Search::run(PositionBase& pos, const SearchParameters& parameters)
+SearchResult Search::run(Position& pos, const SearchParameters& parameters)
 {
     state.parameters = parameters;
     state.plies = {};

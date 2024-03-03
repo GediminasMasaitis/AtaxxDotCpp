@@ -4,6 +4,8 @@
 #include "types.h"
 #include "move.h"
 
+#include "evaluation_nn_base.h"
+
 #include <array>
 #include <vector>
 
@@ -23,6 +25,15 @@ struct PositionBase
     bool operator ==(const PositionBase& position_base) const = default;
 };
 
+struct PositionNnue : PositionBase
+{
+    EvaluationNnueBase::hidden_layers_t accumulators;
+
+    void accumulators_set(const Square sq, const Piece piece);
+    void accumulators_unset(const Square sq, const Piece piece);
+    void reset_accumulators();
+};
+
 struct UndoData
 {
     ZobristKey key;
@@ -30,7 +41,7 @@ struct UndoData
     Bitboard captured;
 };
 
-struct Position : PositionBase
+struct Position : PositionNnue
 {
     static constexpr int32_t max_history_count = 1024;
     std::array<UndoData, max_history_count> History;

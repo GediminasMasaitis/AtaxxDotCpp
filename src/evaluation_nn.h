@@ -6,8 +6,8 @@
 
 struct EvaluationNnue
 {
-    static Score evaluate(const PositionBase& pos);
-    static Score evaluate_from_pov(const PositionBase& pos, Color color = Colors::White);
+    static Score evaluate(const PositionNnue& pos);
+    static Score evaluate_from_pov(const PositionNnue& pos, Color color = Colors::White);
 };
 
 #endif // !EVALUATION_NN_H

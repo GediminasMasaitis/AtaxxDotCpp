@@ -2,7 +2,6 @@
 #define EVALUATION_NN_BASE_H 1
 
 #include "types.h"
-#include "position.h"
 
 struct EvaluationNnueBase
 {
@@ -26,21 +25,26 @@ struct EvaluationNnueBase
     inline static hidden_weights_t hidden_weights;
     inline static hidden_bias_t hidden_bias;
 
+    static constexpr Square get_index(const File file, const Rank rank)
+    {
+        return rank * 7 + file;
+    }
+
     static constexpr Square square_to_index(const Square sq)
     {
-        return (sq / 8) * 7 + (sq % 8);
+        return get_index(get_file(sq), get_rank(sq));
     }
 
     static constexpr Square flip_square(const Square sq)
     {
-        return (sq ^ 56) - 8;
+        return (63 - sq) - 9;
     }
 
     template<bool TSet>
-    static void apply_piece_single(hidden_layer_t& hidden_layer, const int32_t index, bool them)
+    static void apply_piece_single(hidden_layer_t& hidden_layer, const Square sq, Piece piece)
     {
-        //const auto inputIndex = square_to_index(sq);
-        const auto input_index = them * 49 + index;
+        const auto index = square_to_index(sq);
+        const auto input_index = piece * 49 + index;
         for (nnue_count_t hidden_index = 0; hidden_index < hidden_size; hidden_index++)
         {
             if constexpr (TSet)
@@ -54,13 +58,13 @@ struct EvaluationNnueBase
         }
     }
 
-    //template<bool TSet>
-    //static void apply_piece(hidden_layers_t& hiddenLayers, const Square sq)
-    //{
-    //    const Square flipped_sq = flip_square(sq);
-    //    apply_piece_single<TSet>(hiddenLayers[Colors::White], sq);
-    //    apply_piece_single<TSet>(hiddenLayers[Colors::Black], flipped_sq);
-    //}
+    template<bool TSet>
+    static void apply_piece(hidden_layers_t& hidden_layers, const Square sq, const Piece piece)
+    {
+        const Square flipped_sq = flip_square(sq);
+        apply_piece_single<TSet>(hidden_layers[Colors::White], sq, piece);
+        apply_piece_single<TSet>(hidden_layers[Colors::Black], flipped_sq, piece ^ 1);
+    }
 
     static void init();
 };

@@ -16,9 +16,9 @@ class Search
 public:
     SearchState state;
 
-    Score alpha_beta(PositionBase& pos, Ply depth, Ply ply, Score alpha, Score bet, bool is_pv);
-    SearchResult iteratively_deepen(PositionBase& pos);
-    SearchResult run(PositionBase& pos, const SearchParameters& parameters);
+    Score alpha_beta(Position& pos, Ply depth, Ply ply, Score alpha, Score bet, bool is_pv);
+    SearchResult iteratively_deepen(Position& pos);
+    SearchResult run(Position& pos, const SearchParameters& parameters);
 };
 
 #endif // !SEARCH_H

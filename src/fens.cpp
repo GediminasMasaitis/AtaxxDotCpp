@@ -118,6 +118,7 @@ Position Fens::parse(const Fen& fen)
     pos.Bitboards[Pieces::Empty] = ~(pos.Bitboards[Pieces::White] | pos.Bitboards[Pieces::Black] | pos.Bitboards[Pieces::Wall]) & available_position;
     pos.Key = Zobrist.get_key(pos.Turn, pos.Squares);
     pos.playable = get_playable_zone(pos);
+    pos.reset_accumulators();
     return pos;
 }
 
