@@ -55,7 +55,7 @@ static constexpr Square get_index(const File file, const Rank rank)
 }
 
 constexpr int32_t input_size = 98;
-constexpr int32_t hidden_size = 128;
+constexpr int32_t hidden_size = 64;
 using InputData = std::array<data_type, input_size>;
 using OutputData = std::array<data_type, 1>;
 
@@ -273,10 +273,10 @@ int main()
     print_time(start);
     cout << "Loaded test set" << endl;
 
-    constexpr auto train_path = "C:/shared/ataxx/data/data52M.bin";
+    constexpr auto train_path = "C:/shared/ataxx/data/data22M.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data3M.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data_train_small.bin";
-    constexpr auto limit = 10'000'000;
+    constexpr auto limit = 22'000'000;
     //constexpr auto limit = -1;
     auto train_set = MyDataset(train_path, limit).map(torch::data::transforms::Stack<>());
     auto train_size = train_set.size().value();
@@ -293,7 +293,7 @@ int main()
 
     data_type total_train_loss = 0.0;
     data_type total_test_loss = 0.0;
-    for(auto epoch = 0; epoch < 50; epoch++)
+    for(auto epoch = 0; epoch < 40; epoch++)
     {
         for (auto& batch : *train_loader)
         {
