@@ -2,7 +2,9 @@
 
 Runner used: https://github.com/kz04px/cuteataxx
 
-Book used: https://github.com/kz04px/cuteataxx/blob/master/res/openings/ply3_fair.txt
+Books used:
+* https://github.com/kz04px/cuteataxx/blob/master/res/openings/ply3_fair.txt Jul 27, 2022
+* https://github.com/zzzzz151/Ataxxer/blob/main/openings_8ply.txt Feb 26, 2024
 
 ## Version 1
 
@@ -1105,24 +1107,68 @@ info depth 4 time 1 score 71 nodes 2549 nps 2549000 pv f2 f6 e2 f7
 info depth 5 time 1 score 76 nodes 11342 nps 11342000 pv f1 f6 f1g3 b2 g3e5
 info depth 6 time 4 score 16 nodes 35408 nps 8852000 pv b6 f6 f1 g5 f2d1 a1c1
 info depth 7 time 14 score 94 nodes 101037 nps 7216928 pv b6 b2 c5 b2d1 g1e1 f6 c5e6
-info depth 8 time 66 score 16 nodes 434783 nps 6587621 pv a7c5 b2 d6 f6 d6f7 b2b4 f7d6 b4d5
-info depth 9 time 158 score 84 nodes 975101 nps 6171525 pv g1e3 b2 f4 c2 d3 b2d2 e4 d2d4 e5
-info depth 10 time 414 score 31 nodes 2459190 nps 5940072 pv f2 b2 e3 f6 d2 c3 e3c2 a1b3 d3 b2c4
-info depth 11 time 743 score 92 nodes 4337512 nps 5837835 pv b6 f6 c5 e6 f2 b2 d6 f6d5 c6 e5 d4
-info depth 12 time 1361 score 60 nodes 7709640 nps 5664687 pv b6 a2 c5 f6 d6 e5 c5e6 g7e7 e5f7 d7 c6 e6c7
-info depth 13 time 2513 score 73 nodes 13996287 nps 5569553 pv b6 b2 c5 b3 b4 b2c4 b5 b3a5 a6 a4 c4b2 b4a2 b6b4
-info depth 14 time 4071 score 56 nodes 22078172 nps 5423279 pv b6 b2 c5 f7 d4 c3 c4 b2d3 b6d5 d3f2 e3 f7d6 c4c6
-info depth 15 time 7943 score 50 nodes 41988979 nps 5286287 pv b6 b2 c5 b3 b4 b2c4 b5 c3 a4 c3a3 a7a5 c4c6 b4b2 d5c3
-info depth 16 time 10257 score 50 nodes 54265585 nps 5290590 pv b6 b2 c5 e5 d6 f6d5 b6d4 d6e4 c4 e5c6 c4d6 g7e5 c5e6 c4 e5
-info depth 17 time 34498 score 42 nodes 174712919 nps 5064436 pv b6 b2 f2 b3 c7 b4 e2 a5 e2c3 b6c4 c7b5 c3a4 a2 a3 b1 c3
+info depth 8 time 67 score 16 nodes 434783 nps 6489298 pv a7c5 b2 d6 f6 d6f7 b2b4 f7d6 b4d5
+info depth 9 time 160 score 84 nodes 975101 nps 6094381 pv g1e3 b2 f4 c2 d3 b2d2 e4 d2d4 e5
+info depth 10 time 422 score 31 nodes 2459190 nps 5827464 pv f2 b2 e3 f6 d2 c3 e3c2 a1b3 d3 b2c4
+info depth 11 time 761 score 92 nodes 4337512 nps 5699752 pv b6 f6 c5 e6 f2 b2 d6 f6d5 c6 e5 d4
+info depth 12 time 1393 score 60 nodes 7709640 nps 5534558 pv b6 a2 c5 f6 d6 e5 c5e6 g7e7 e5f7 d7 c6 e6c7
+info depth 13 time 2583 score 73 nodes 13996287 nps 5418616 pv b6 b2 c5 b3 b4 b2c4 b5 b3a5 a6 a4 c4b2 b4a2 b6b4
+info depth 14 time 4161 score 56 nodes 22078172 nps 5305977 pv b6 b2 c5 f7 d4 c3 c4 b2d3 b6d5 d3f2 e3 f7d6 c4c6
+info depth 15 time 8070 score 50 nodes 41988979 nps 5203095 pv b6 b2 c5 b3 b4 b2c4 b5 c3 a4 c3a3 a7a5 c4c6 b4b2 d5c3
+info depth 16 time 10443 score 50 nodes 54265585 nps 5196359 pv b6 b2 c5 e5 d6 f6d5 b6d4 d6e4 c4 e5c6 c4d6 g7e5 c5e6 c4 e5
+info depth 17 time 35317 score 42 nodes 174712919 nps 4946992 pv b6 b2 f2 b3 c7 b4 e2 a5 e2c3 b6c4 c7b5 c3a4 a2 a3 b1 c3
+info depth 18 time 48383 score 59 nodes 238058417 nps 4920290 pv b6 b2 c5 f6 d4 e5 c5c3 e5c5 c3e5 c5c3 f7 d4f2 d4 f2e4 c3d5 b7 c6
+info depth 19 time 104301 score 42 nodes 504762966 nps 4839483 pv b6 f6 f2 g5 e1 g4 e2 f3 e1e3 g4g2 f4 g2e4 g6 f5 f7 g5e6 d3
 ```
 
 ```
 1+0.01:
-Score of AtaxxDotCpp-2.9 vs AtaxxDotCpp-1.17: 2627 - 2241 - 132  [0.539] 5000
+Score of AtaxxDotCpp-2.9 vs AtaxxDotCpp-2.8: 2627 - 2241 - 132  [0.539] 5000
 26.88 +/- 9.52
 
 10+0.1:
-Score of AtaxxDotCpp-2.9 vs AtaxxDotCpp-1.17: 1293 - 1139 - 68  [0.531] 2500
+Score of AtaxxDotCpp-2.9 vs AtaxxDotCpp-2.8: 1293 - 1139 - 68  [0.531] 2500
 21.43 +/- 13.45
+```
+
+## From here, tests are using openings_8ply.txt book
+
+### 2.10
+
+Fix PVS flag
+
+```
+info depth 1 time 1 score 133 nodes 9 nps 9000 pv f2
+info depth 2 time 1 score 35 nodes 57 nps 57000 pv f2 f7
+info depth 3 time 1 score 100 nodes 531 nps 531000 pv g1e3 a1b3 f4
+info depth 4 time 1 score 71 nodes 2540 nps 2540000 pv f2 f6 e2 f7
+info depth 5 time 1 score 76 nodes 11299 nps 11299000 pv f1 f6 f1g3 b2 g3e5
+info depth 6 time 4 score 16 nodes 35288 nps 8822000 pv b6 f6 f1 g5 f2d1 a1c1
+info depth 7 time 14 score 94 nodes 100543 nps 7181642 pv b6 b2 c5 b2d1 g1e1 f6 c5e6
+info depth 8 time 68 score 16 nodes 440289 nps 6474838 pv a7c5 b2 d6 f6 d6f7 b2b4 f7d6 b4d5
+info depth 9 time 159 score 75 nodes 974489 nps 6128861 pv g1e3 b2 f4 b2a4 d4 a4b6 f4f6 a1c1 c5
+info depth 10 time 469 score 31 nodes 2739635 nps 5841439 pv f2 b2 e3 f6 d2 c3 e3c2 a1b3 d3 b2c4
+info depth 11 time 725 score 73 nodes 4171571 nps 5753891 pv b6 f6 c5 b2 f2 f5 d4 f5e3 c5e5 g7e6 d4f5
+info depth 12 time 1196 score 60 nodes 6708457 nps 5609077 pv b6 f6 c5 e5 a6 e5g4 d6 g4f2 d6f7 g7e6 d4f5
+info depth 13 time 1832 score 61 nodes 10154834 nps 5543031 pv b6 f6 c5 f5 d4 f6d6 d5 e5 c5e6 c5 e4 c4
+info depth 14 time 3467 score 60 nodes 18664128 nps 5383365 pv b6 b2 c5 c2 d6 d1 g1e2 b2d2 c5d3 d1e3 c3 e3c5 a7c6 a1c1
+info depth 15 time 6991 score 51 nodes 36694638 nps 5248839 pv b6 b2 c6 f6 f2 f5 d5 g4 d5f4 g5 c6e5 g5e4 f2d4 e6 d5
+info depth 16 time 17128 score 49 nodes 87543872 nps 5111155 pv b6 f6 c5 e5 b4 d6 b6d5 e6 c6 e5c4 e5 g7f5 b5 d7 d5e7 e5f7
+info depth 17 time 23080 score 50 nodes 117678614 nps 5098726 pv b6 b2 c5 f6 d4 e5 c5c3 e5e3 c3e5 e3c3 g6 d4f5 f7 e5g5 f2 e6
+info depth 18 time 29721 score 61 nodes 151292340 nps 5090418 pv b6 b2 c5 c3 d6 b4 d6c4 b3 b5 b3a5 b3 b5d4 b3d3 a1b3 c2 a2
+info depth 19 time 50238 score 60 nodes 253179189 nps 5039595 pv b6 b2 c6 c3 d7 d4 c6e5 c3d5 d7f6 d5f5 g6 e5f7 c5 f6e4 c5e5 f7d5 e6
+```
+
+```
+Old ply3_fair book, 1+0.1:
+Score of AtaxxDotCpp-2.10 vs AtaxxDotCpp-2.9: 3818 - 3485 - 197  [0.522] 7500
+15.44 +/- 7.76
+
+1+0.01:
+Score of AtaxxDotCpp-2.10 vs AtaxxDotCpp-2.9: 2559 - 2308 - 133  [0.525] 5000
+17.46 +/- 9.50
+
+10+0.1:
+Score of AtaxxDotCpp-2.10 vs AtaxxDotCpp-2.9: 986 - 941 - 73  [0.511] 2000
+7.82 +/- 14.94
 ```

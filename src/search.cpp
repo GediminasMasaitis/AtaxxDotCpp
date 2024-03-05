@@ -95,12 +95,12 @@ Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, c
         Score score;
         if(move_index > 0)
         {
-            auto reduction = move_index > 8 && depth > 4 ? 2 : 0;
+            const auto reduction = move_index > 8 && depth > 4 ? 2 : 0;
             score = -alpha_beta(pos, depth - 1 - reduction, ply + 1, -alpha - 1, -alpha, false);
         }
         if(move_index == 0 || (score > alpha && score < beta))
         {
-            score = -alpha_beta(pos, depth - 1, ply + 1, -beta, -alpha, true);
+            score = -alpha_beta(pos, depth - 1, ply + 1, -beta, -alpha, is_pv);
         }
         pos.unmake_move();
 
