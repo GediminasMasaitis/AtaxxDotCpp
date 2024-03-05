@@ -12,7 +12,7 @@ using namespace std;
 
 constexpr bool print_info = !do_datagen;
 
-Score Search::alpha_beta(Position& pos, const Ply depth, const Ply ply, Score alpha, const Score beta, const bool is_pv)
+Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, const Score beta, const bool is_pv)
 {
     auto& ply_state = state.plies[ply];
 
@@ -61,6 +61,11 @@ Score Search::alpha_beta(Position& pos, const Ply depth, const Ply ply, Score al
                 return tt_entry.score;
             }
         }
+    }
+    // INTERNAL ITERATIVE REDUCTION
+    else if(depth > 3)
+    {
+        depth--;
     }
 
     // REVERSE FUTILITY PRUNING
