@@ -108,6 +108,16 @@ struct SearchState
         {
             ply.new_search();
         }
+
+        // Age history table
+        for(Square from = 0; from < 64; from++)
+        {
+            for(Square to = 0; to < 64; to++)
+            {
+                history[from][to] /= 8;
+            }
+        }
+
         nodes = 0;
     }
 

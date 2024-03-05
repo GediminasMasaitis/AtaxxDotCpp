@@ -1181,3 +1181,17 @@ Fully clear state on uainewgame
 Score of AtaxxDotCpp-2.11 vs AtaxxDotCpp-2.10: 2427 - 2415 - 158  [0.501] 5000
 0.83 +/- 9.47
 ```
+
+### 2.12
+
+History table aging
+
+```
+1+0.01:
+Score of AtaxxDotCpp-2.12 vs AtaxxDotCpp-2.11: 2640 - 2249 - 111  [0.539] 5000
+27.23 +/- 9.54
+
+10+0.1:
+Score of AtaxxDotCpp-2.12 vs AtaxxDotCpp-2.11: 505 - 455 - 40  [0.525] 1000
+17.39 +/- 21.12
+```
