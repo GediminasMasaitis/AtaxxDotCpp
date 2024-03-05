@@ -75,17 +75,53 @@ struct PrincipalVariationData
 struct PlyState
 {
     PrincipalVariationData principal_variation;
+
+    void new_search()
+    {
+        principal_variation.length = 0;
+    }
+
+    void clear()
+    {
+        principal_variation.length = 0;
+    }
 };
 
 struct SearchState
 {
-    PrincipalVariationData saved_pv;
-    Timer timer;
     SearchParameters parameters;
-    uint64_t nodes;
+    Timer timer;
+    EachPly<PlyState> plies;
+    PrincipalVariationData saved_pv;
     TranspositionTable table;
     EachSquare<EachSquare<MoveScore>> history;
-    EachPly<PlyState> plies;
+    uint64_t nodes;
+
+    void new_search(const PositionBase& pos, const SearchParameters& new_parameters)
+    {
+        parameters = new_parameters;
+        const Time time = pos.Turn == Colors::White ? parameters.white_time : parameters.black_time;
+        const Time increment = pos.Turn == Colors::White ? parameters.white_increment : parameters.black_increment;
+        timer.init(parameters.infinite, parameters.nodes_min, parameters.nodes_max, time, increment);
+
+        for (auto& ply : plies)
+        {
+            ply.new_search();
+        }
+        nodes = 0;
+    }
+
+    void clear()
+    {
+        for (auto& ply : plies)
+        {
+            ply.clear();
+        }
+        saved_pv.length = 0;
+        table.clear();
+        history = { };
+        nodes = 0;
+    }
 };
 
 #endif // !SEARCHSTATE_H

@@ -28,7 +28,7 @@ void Uai::handle_uai()
 void Uai::handle_uainewgame()
 {
     current_pos = Fens::parse(initial_fen);
-    search.state.table.clear();
+    search.state.clear();
 }
 
 void Uai::handle_startpos(std::stringstream& reader)
@@ -173,7 +173,7 @@ void Uai::handle_input(const std::string& command)
         {
             cout << "readyok" << endl;
         }
-        else if(token == "uainewgame")
+        else if(token == "uainewgame" || token == "ucinewgame")
         {
             handle_uainewgame();
         }
@@ -223,6 +223,7 @@ void Uai::run()
     current_pos = Fens::parse(initial_fen);
     search = Search();
     search.state.table.set_size(1024 * 1024 * 32);
+    search.state.clear();
 
     while (true)
     {

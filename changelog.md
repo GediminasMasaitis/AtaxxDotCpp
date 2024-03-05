@@ -1172,3 +1172,12 @@ Score of AtaxxDotCpp-2.10 vs AtaxxDotCpp-2.9: 2559 - 2308 - 133  [0.525] 5000
 Score of AtaxxDotCpp-2.10 vs AtaxxDotCpp-2.9: 986 - 941 - 73  [0.511] 2000
 7.82 +/- 14.94
 ```
+
+### 2.11
+
+Fully clear state on uainewgame
+
+```
+Score of AtaxxDotCpp-2.11 vs AtaxxDotCpp-2.10: 2427 - 2415 - 158  [0.501] 5000
+0.83 +/- 9.47
+```

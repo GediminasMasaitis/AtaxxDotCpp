@@ -212,12 +212,7 @@ SearchResult Search::iteratively_deepen(Position& pos)
 
 SearchResult Search::run(Position& pos, const SearchParameters& parameters)
 {
-    state.parameters = parameters;
-    state.plies = {};
-    state.nodes = 0;
-    const Time time = pos.Turn == Colors::White ? state.parameters.white_time : state.parameters.black_time;
-    const Time increment = pos.Turn == Colors::White ? state.parameters.white_increment : state.parameters.black_increment;
-    state.timer.init(parameters.infinite, parameters.nodes_min, parameters.nodes_max, time, increment);
+    state.new_search(pos, parameters);
     const SearchResult result = iteratively_deepen(pos);
     return result;
 }
