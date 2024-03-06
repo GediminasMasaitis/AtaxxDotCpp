@@ -195,17 +195,23 @@ struct Net : torch::nn::Module {
     }
 };
 
-void print_params(const Net& model)
+void print_params(const Net& model, int epoch)
 {
-    auto file_float = ofstream("C:/shared/ataxx/nets/default.nnue-floats", ios::out | ios::binary);
-    auto file_quantized = ofstream("C:/shared/ataxx/nets/default.nnue", ios::out | ios::binary);
-    auto file_human = ofstream("C:/shared/ataxx/nets/default.txt", ios::out);
+    const string float_path = "C:/shared/ataxx/nets/current/default-" + to_string(epoch) + ".nnue-floats";
+    auto file_float = ofstream(float_path, ios::out | ios::binary);
+
+    const string quantized_path = "C:/shared/ataxx/nets/current/default-" + to_string(epoch) + ".nnue";
+    auto file_quantized = ofstream(quantized_path, ios::out | ios::binary);
+
+    const string human_path = "C:/shared/ataxx/nets/current/default-" + to_string(epoch) + ".txt";
+    auto file_human = ofstream(human_path, ios::out);
+
     stringstream ss;
     for (const auto& pair : model.named_parameters()) {
         auto& name = pair.key();
         auto param = pair.value().reshape(-1);
-        cout << name << ": " << pair.value().sizes() << endl;
-        cout << name << ": " << param.sizes() << endl;
+        //cout << name << ": " << pair.value().sizes() << endl;
+        //cout << name << ": " << param.sizes() << endl;
         ss << name << endl;
         file_human << name << endl;
         for (auto i = 0; i < param.size(0); i++)
@@ -235,7 +241,7 @@ void print_params(const Net& model)
     }
     ss << endl;
     const auto str = ss.str();
-    cout << str;
+    //cout << str;
     file_float.flush();
     file_quantized.flush();
     file_human.flush();
@@ -273,10 +279,10 @@ int main()
     print_time(start);
     cout << "Loaded test set" << endl;
 
-    constexpr auto train_path = "C:/shared/ataxx/data/data22M.bin";
+    constexpr auto train_path = "C:/shared/ataxx/data/data27M.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data3M.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data_train_small.bin";
-    constexpr auto limit = 22'000'000;
+    constexpr auto limit = 27'000'000;
     //constexpr auto limit = -1;
     auto train_set = MyDataset(train_path, limit).map(torch::data::transforms::Stack<>());
     auto train_size = train_set.size().value();
@@ -293,7 +299,7 @@ int main()
 
     data_type total_train_loss = 0.0;
     data_type total_test_loss = 0.0;
-    for(auto epoch = 0; epoch < 40; epoch++)
+    for(auto epoch = 0; epoch < 60; epoch++)
     {
         for (auto& batch : *train_loader)
         {
@@ -332,10 +338,10 @@ int main()
         cout << "Epoch: " << epoch << " | Train loss: " << average_train_loss << " | Test loss: " << average_test_loss << std::endl;
         total_train_loss = 0;
         total_test_loss = 0;
+        print_params(net, epoch);
     }
 
     torch::NoGradGuard no_grad;
-    print_params(net);
 
     auto it = test_loader->begin();
     auto sample_data = it->data.clone();

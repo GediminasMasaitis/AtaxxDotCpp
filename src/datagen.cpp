@@ -68,7 +68,7 @@ struct DatagenStats
     }
 };
 
-static constexpr uint64_t seed_base = 0;
+static constexpr uint64_t seed_base = 4;
 static constexpr ThreadCount thread_count = 12;
 static const Position initial_pos = Fens::parse(initial_fen);
 
@@ -219,13 +219,9 @@ void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search
 
     assert(!pos.is_terminal());
 
-    //pos = Fens::parse("x1x4/1x5/x5o/7/7/2o3x/oo4x x");
-    search.state.table.clear();
-    search.state.history = {};
-
     SearchParameters parameters;
-    parameters.nodes_min = 10000;
-    parameters.nodes_max = 50000;
+    parameters.nodes_min = 20000;
+    parameters.nodes_max = 150000;
 
     while(true)
     {
@@ -264,27 +260,6 @@ void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search
     if (pos.Turn == Colors::Black)
     {
         wdl = 2 - wdl;
-    }
-
-    Wdl wdl2;
-    if(pop_count(pos.Bitboards[Pieces::White]) > pop_count(pos.Bitboards[Pieces::Black]))
-    {
-        wdl2 = 2;
-    }
-    else if(pop_count(pos.Bitboards[Pieces::White]) < pop_count(pos.Bitboards[Pieces::Black]))
-    {
-        wdl2 = 0;
-    }
-    else
-    {
-        wdl2 = 1;
-    }
-
-    assert(wdl == wdl2);
-    if(wdl != wdl2)
-    {
-        cout << "ARGH";
-        throw "A";
     }
 
     const bool is_elimination = pos.Bitboards[Pieces::Empty] != 0;
@@ -373,8 +348,8 @@ static void run_datagen()
     constexpr auto out_bin_path = "C:/shared/ataxx/data/data2.bin";
     constexpr auto out_epd_path = "C:/shared/ataxx/data/data2.epd";
 #else
-    constexpr auto out_bin_path = "/shared/ataxx/data/data2.bin";
-    constexpr auto out_epd_path = "C:/shared/ataxx/data/data2.epd";
+    constexpr auto out_bin_path = "/mnt/c/shared/ataxx/data/data2.bin";
+    constexpr auto out_epd_path = "/mnt/c/shared/ataxx/data/data2.epd";
 #endif
     cout << "Writing binary results to " << out_bin_path << endl;
     ofstream bin_file(out_bin_path, std::ios::out | std::ios::binary);
