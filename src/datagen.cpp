@@ -68,7 +68,7 @@ struct DatagenStats
     }
 };
 
-static constexpr uint64_t seed_base = 4;
+static constexpr uint64_t seed_base = 0;
 static constexpr ThreadCount thread_count = 12;
 static const Position initial_pos = Fens::parse(initial_fen);
 
@@ -220,8 +220,8 @@ void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search
     assert(!pos.is_terminal());
 
     SearchParameters parameters;
-    parameters.nodes_min = 20000;
-    parameters.nodes_max = 150000;
+    parameters.nodes_min = 10000;
+    parameters.nodes_max = 50000;
 
     while(true)
     {

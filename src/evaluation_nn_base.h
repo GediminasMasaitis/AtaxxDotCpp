@@ -3,6 +3,32 @@
 
 #include "types.h"
 
+struct SquareToIndexClass
+{
+    std::array<Square, 64> values;
+
+    static constexpr Square get_index(const File file, const Rank rank)
+    {
+        return rank * 7 + file;
+    }
+
+    static constexpr Square get_square_to_index(const Square sq)
+    {
+        return get_index(get_file(sq), get_rank(sq));
+    }
+
+    constexpr SquareToIndexClass()
+    {
+        values = {};
+        for (Square sq = 0; sq < SquareCount; sq++)
+        {
+            values[sq] = get_square_to_index(sq);
+        }
+    }
+};
+
+static constexpr SquareToIndexClass square_to_index = SquareToIndexClass();
+
 struct EvaluationNnueBase
 {
     using nnue_count_t = int32_t;
@@ -27,16 +53,6 @@ struct EvaluationNnueBase
     inline static hidden_weightses_t hidden_weightses;
     inline static hidden_bias_t hidden_bias;
 
-    static constexpr Square get_index(const File file, const Rank rank)
-    {
-        return rank * 7 + file;
-    }
-
-    static constexpr Square square_to_index(const Square sq)
-    {
-        return get_index(get_file(sq), get_rank(sq));
-    }
-
     static constexpr Square flip_square(const Square sq)
     {
         return (63 - sq) - 9;
@@ -45,7 +61,7 @@ struct EvaluationNnueBase
     template<bool TSet>
     static void apply_piece_single(hidden_layer_t& hidden_layer, const Square sq, Piece piece)
     {
-        const auto index = square_to_index(sq);
+        const auto index = square_to_index.values[sq];
         const auto input_index = piece * 49 + index;
         for (nnue_count_t hidden_index = 0; hidden_index < hidden_size; hidden_index++)
         {

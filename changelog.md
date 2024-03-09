@@ -1351,3 +1351,12 @@ Score of AtaxxDotCpp-2.14 vs AtaxxDotCpp-2.13: 3057 - 1790 - 153  [0.627] 5000
 Score of AtaxxDotCpp-2.14 vs AtaxxDotCpp-2.13: 571 - 386 - 43  [0.592] 1000
 65.02 +/- 21.42
 ```
+
+### 2.15
+
+Speed up NNUE slightly
+
+```
+Score of AtaxxDotCpp-2.15 vs AtaxxDotCpp-2.14: 2458 - 2412 - 130  [0.505] 5000
+3.20 +/- 9.49
+```
