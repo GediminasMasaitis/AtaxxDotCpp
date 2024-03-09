@@ -56,7 +56,9 @@ static constexpr Square get_index(const File file, const Rank rank)
 
 constexpr int32_t input_size = 98;
 constexpr int32_t hidden_size = 64;
+constexpr bool double_accumulator = false;
 using InputData = std::array<data_type, input_size>;
+using InputDatas = std::array<InputData, 2>;
 using OutputData = std::array<data_type, 1>;
 
 constexpr Bitboard reverse_bits(Bitboard bitboard)
@@ -79,9 +81,6 @@ constexpr Bitboard reverse_bits(Bitboard bitboard)
 class MyDataset : public torch::data::Dataset<MyDataset>
 {
 public:
-    vector<InputData> inputs_data;
-    vector<OutputData> outputs_data;
-
     vector<torch::Tensor> inputs;
     vector<torch::Tensor> targets;
 
@@ -95,8 +94,11 @@ public:
         cout << size << " bytes" << endl;
         cout << entry_count << " entries" << endl;
 
-        inputs_data.resize(entry_count);
-        outputs_data.resize(entry_count);
+        //vector<InputDatas> inputs_data;
+        //vector<OutputData> outputs_data;
+
+        //inputs_data.resize(entry_count);
+        //outputs_data.resize(entry_count);
 
         inputs.reserve(entry_count);
         targets.reserve(entry_count);
@@ -110,42 +112,52 @@ public:
 
         const auto tensor_options = torch::TensorOptions().dtype(data_type_val);
 
-        for(size_t entry_index = 0; entry_index < entry_count; entry_index++)
+        for (size_t entry_index = 0; entry_index < entry_count; entry_index++)
         {
             const auto entry = read_entry(stream);
-            
-            auto& input_data = inputs_data[entry_index];
-            auto& output_data = outputs_data[entry_index];
+
+            InputDatas input_data;
+            OutputData output_data;
 
             const auto is_black = entry.turn == 1;
-            const auto us = is_black ? reverse_bits(entry.black) : entry.white;
-            const auto them = is_black ? reverse_bits(entry.white) : entry.black;
 
-            for(Rank rank = 0; rank < 7; rank++)
+            const auto us_stm = is_black ? reverse_bits(entry.black) : entry.white;
+            const auto them_stm = is_black ? reverse_bits(entry.white) : entry.black;
+
+            const auto us_nstm = is_black ? entry.white : reverse_bits(entry.black);
+            const auto them_nstm = is_black ? entry.black : reverse_bits(entry.white);
+
+            for (Rank rank = 0; rank < 7; rank++)
             {
                 for (File file = 0; file < 7; file++)
                 {
                     const auto square = get_square(file, rank);
                     const auto index = get_index(file, rank);
-                    input_data[index] = static_cast<data_type>((us >> square) & 1);
-                    input_data[49 + index] = static_cast<data_type>((them >> square) & 1);
+
+                    input_data[0][index] = static_cast<data_type>((us_stm >> square) & 1);
+                    input_data[0][49 + index] = static_cast<data_type>((them_stm >> square) & 1);
+
+                    input_data[1][index] = static_cast<data_type>((us_nstm >> square) & 1);
+                    input_data[1][49 + index] = static_cast<data_type>((them_nstm >> square) & 1);
                 }
             }
 
             const auto wdl = is_black ? static_cast<data_type>(2 - entry.wdl) / 2 : static_cast<data_type>(entry.wdl) / 2;
             output_data[0] = wdl;
-            auto input = torch::from_blob(input_data.data(), { input_size }, tensor_options);
-            auto target = torch::from_blob(output_data.data(), { 1 }, tensor_options);
+            auto input_stm = torch::from_blob(input_data[0].data(), { input_size }, tensor_options);
+            auto input_nstm = torch::from_blob(input_data[1].data(), { input_size }, tensor_options);
+            auto input = torch::stack({ input_stm, input_nstm }).clone();
+            auto target = torch::from_blob(output_data.data(), { 1 }, tensor_options).clone();
 
             inputs.push_back(input);
             targets.push_back(target);
 
-            if(entry_index % 1000000 == 0)
+            if (entry_index % 1000000 == 0)
             {
                 cout << "Loaded " << entry_index << " entries" << endl;
             }
 
-            if(entry_index == limit)
+            if (entry_index == limit)
             {
                 break;
             }
@@ -173,25 +185,45 @@ struct Net : torch::nn::Module {
 
     Net() {
         fc1 = register_module("fc1", torch::nn::Linear(input_size, hidden_size));
-        fc2 = register_module("fc2", torch::nn::Linear(hidden_size, 1));
+        fc2 = register_module("fc2", torch::nn::Linear(hidden_size * (double_accumulator ? 2 : 1), 1));
+    }
+
+    torch::Tensor forward_inner(torch::Tensor x) {
+        if constexpr (double_accumulator)
+        {
+            auto stm = x.select(1, 0);
+            auto nstm = x.select(1, 1);
+
+            stm = fc1->forward(stm);
+            nstm = fc1->forward(nstm);
+
+            auto combined = torch::cat({ stm, nstm }, 1);
+            combined = torch::relu(combined);
+
+            auto result = fc2->forward(combined);
+            return result;
+        }
+        else
+        {
+            auto stm = x.select(1, 0);
+            stm = fc1->forward(stm);
+            stm = torch::relu(stm);
+            auto result = fc2->forward(stm);
+            return result;
+        }
     }
 
     torch::Tensor forward(torch::Tensor x) {
-        x = x.reshape({ x.size(0), input_size });
-        x = fc1->forward(x);
-        x = torch::relu(x);
-        x = fc2->forward(x);
-        x = torch::sigmoid(x);
-        return x;
+        auto result = forward_inner(x);
+        result = torch::sigmoid(result);
+        return result;
     }
 
     torch::Tensor forward_no_sig(torch::Tensor x)
     {
-        x = x.reshape({ x.size(0), input_size });
-        x = fc1->forward(x);
-        x = torch::relu(x);
-        x = fc2->forward(x);
-        return x;
+        auto result = forward_inner(x);
+        result *= 512;
+        return result;
     }
 };
 
@@ -207,6 +239,7 @@ void print_params(const Net& model, int epoch)
     auto file_human = ofstream(human_path, ios::out);
 
     stringstream ss;
+    float max_val = 0;
     for (const auto& pair : model.named_parameters()) {
         auto& name = pair.key();
         auto param = pair.value().reshape(-1);
@@ -220,13 +253,18 @@ void print_params(const Net& model, int epoch)
             file_float.write(reinterpret_cast<char*>(&val), sizeof(data_type));
 
             float rounded = round(val * 512);
-            if(rounded < -32768)
+            if (rounded < -32768)
             {
                 cout << "TOO SMALL";
             }
             else if (rounded > 32767)
             {
                 cout << "TOO BIG";
+            }
+            auto rounded_abs = abs(rounded);
+            if (rounded_abs > max_val)
+            {
+                max_val = rounded_abs;
             }
 
             auto quantized = static_cast<quantized_type>(rounded);
@@ -240,6 +278,7 @@ void print_params(const Net& model, int epoch)
         file_human << endl;
     }
     ss << endl;
+    cout << "Max val: " << max_val << endl;
     const auto str = ss.str();
     //cout << str;
     file_float.flush();
@@ -250,23 +289,21 @@ void print_params(const Net& model, int epoch)
 void print_time(chrono::time_point<chrono::high_resolution_clock> start)
 {
     const auto end = chrono::high_resolution_clock::now();
-    const auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
-    cout << "[" << duration.count() << "ms] ";
+    const auto milliseconds = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+    if (milliseconds < 10000)
+    {
+        cout << "[" << milliseconds << "ms] ";
+        return;
+    }
+    const auto seconds = chrono::duration_cast<chrono::seconds>(end - start).count();
+    cout << "[" << seconds << "s] ";
 }
 
 int main()
 {
     const auto start = chrono::high_resolution_clock::now();
-
-    //auto a = at::get_num_threads();
-    //auto b = at::get_thread_num();
-    //auto c = torch::get_num_threads();
-    //auto d = torch::get_num_interop_threads();
-
-    //cout << a << " " << b << " " << c << " " << d << endl;
-
-    auto device = torch::Device(torch::kCPU);
-    //auto device = torch::Device(torch::kCUDA);
+    //auto device = torch::Device(torch::kCPU);
+    auto device = torch::Device(torch::kCUDA);
 
     constexpr int32_t batch_size = 1024 * 128;
     //constexpr int32_t batch_size = 1024 * 32;
@@ -275,18 +312,23 @@ int main()
     constexpr auto test_path = "C:/shared/ataxx/data/data_test.bin";
     auto test_set = MyDataset(test_path).map(torch::data::transforms::Stack<>());
     auto test_size = test_set.size().value();
-    auto test_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(std::move(test_set), torch::data::DataLoaderOptions(batch_size));
+    auto data_loader_options = torch::data::DataLoaderOptions();
+    data_loader_options.batch_size(batch_size);
+    data_loader_options.workers(10);
+    //data_loader_options.enforce_ordering(false);
+
+    auto test_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(std::move(test_set), data_loader_options);
     print_time(start);
     cout << "Loaded test set" << endl;
 
-    constexpr auto train_path = "C:/shared/ataxx/data/data27M.bin";
+    constexpr auto train_path = "C:/shared/ataxx/data/data22M-old.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data3M.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data_train_small.bin";
-    constexpr auto limit = 27'000'000;
+    constexpr auto limit = 22'000'000;
     //constexpr auto limit = -1;
     auto train_set = MyDataset(train_path, limit).map(torch::data::transforms::Stack<>());
     auto train_size = train_set.size().value();
-    auto train_loader = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(std::move(train_set), torch::data::DataLoaderOptions(batch_size));
+    auto train_loader = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(std::move(train_set), data_loader_options);
     print_time(start);
     cout << "Loaded training set" << endl;
 
@@ -299,8 +341,9 @@ int main()
 
     data_type total_train_loss = 0.0;
     data_type total_test_loss = 0.0;
-    for(auto epoch = 0; epoch < 60; epoch++)
+    for (auto epoch = 0; epoch < 200; epoch++)
     {
+        const auto epoch_start = chrono::high_resolution_clock::now();
         for (auto& batch : *train_loader)
         {
             auto data = batch.data.to(device);
@@ -334,7 +377,7 @@ int main()
         }
         const auto average_train_loss = total_train_loss / train_size;
         const auto average_test_loss = total_test_loss / test_size;
-        print_time(start);
+        print_time(epoch_start);
         cout << "Epoch: " << epoch << " | Train loss: " << average_train_loss << " | Test loss: " << average_test_loss << std::endl;
         total_train_loss = 0;
         total_test_loss = 0;
@@ -351,7 +394,7 @@ int main()
     ss << setprecision(5);
 
     ss << "Targets: " << endl;
-    for(auto i = 0; i < sample_data.size(0); i++)
+    for (auto i = 0; i < sample_data.size(0); i++)
     {
         ss << sample_target[i].item<data_type>() << " ";
     }

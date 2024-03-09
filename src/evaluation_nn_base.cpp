@@ -17,7 +17,7 @@ using namespace std;
 
 #if ENABLE_INCBIN
 #include "external/incbin/incbin.h"
-INCBIN(network, "networks/default.nnue");
+INCBIN(network, "networks/default.nnue-floats");
 #endif
 
 static constexpr Square get_index(const File file, const Rank rank)
@@ -25,15 +25,17 @@ static constexpr Square get_index(const File file, const Rank rank)
     return rank * 7 + file;
 }
 
-template<class T>
-static T read(std::istream& stream)
+static EvaluationNnueBase::nnue_param_t read(std::istream& stream)
 {
-    constexpr size_t size = sizeof(T);
+    constexpr size_t size = sizeof(float);
     char buffer[size];
     stream.read(buffer, size);
-    const T* resultPtr = reinterpret_cast<T*>(buffer);
-    const auto result = *resultPtr;
-    return result;
+    const float* float_ptr = reinterpret_cast<float*>(buffer);
+    const auto result_float = *float_ptr;
+    const auto result_scaled = result_float * 128;
+    const auto result_rounded = round(result_scaled);
+    const auto result_quantized = static_cast<EvaluationNnueBase::nnue_param_t>(result_rounded);
+    return result_quantized;
 }
 
 void EvaluationNnueBase::init()
@@ -44,9 +46,9 @@ void EvaluationNnueBase::init()
     cout << "Using included NNUE" << endl;
 #else
     #ifdef _WIN32
-        constexpr auto path = "C:/shared/ataxx/nets/default.nnue";
+        constexpr auto path = "C:/shared/ataxx/nets/default.nnue-floats";
     #else
-        constexpr auto path = "/mnt/c/shared/ataxx/nets/default.nnue";
+        constexpr auto path = "/mnt/c/shared/ataxx/nets/default.nnue-floats";
     #endif
     cout << "Reading NNUE from " << path << endl;
     auto file = ifstream(path, ios::binary);
@@ -64,7 +66,7 @@ void EvaluationNnueBase::init()
     {
         for (auto j = 0; j < input_size; j++)
         {
-            input_weights[j][i] = read<nnue_param_t>(file);
+            input_weights[j][i] = read(file);
             ss << input_weights[j][i] << " ";
         }
         ss << endl;
@@ -73,19 +75,28 @@ void EvaluationNnueBase::init()
     ss << "Bias 1: ";
     for (auto i = 0; i < hidden_size; i++)
     {
-        input_biases[i] = read<nnue_param_t>(file);
+        input_biases[i] = read(file);
         ss << input_biases[i] << " ";
     }
 
     ss << endl << "Weights 2: ";
     for (auto i = 0; i < hidden_size; i++)
     {
-        hidden_weights[i] = read<nnue_param_t>(file);
+        hidden_weights[i] = read(file);
         ss << hidden_weights[i] << " ";
     }
 
+    //for(Color color = 0; color < Colors::Count; color++)
+    //{
+    //    for (auto i = 0; i < hidden_size; i++)
+    //    {
+    //        hidden_weightses[color][i] = read(file);
+    //        ss << hidden_weightses[color][i] << " ";
+    //    }
+    //}
+
     ss << endl << "Bias 2: ";
-    hidden_bias = read<nnue_param_t>(file);
+    hidden_bias = read(file);
     ss << hidden_bias << endl;
 
     const auto str = ss.str();

@@ -14,6 +14,7 @@ struct EvaluationNnueBase
     using input_weights_t = std::array<std::array<nnue_param_t, hidden_size>, input_size>;
     using input_biases_t = std::array<nnue_param_t, hidden_size>;
     using hidden_weights_t = std::array<nnue_param_t, hidden_size>;
+    using hidden_weightses_t = std::array<hidden_weights_t, 2>;
     using hidden_bias_t = nnue_param_t;
 
     using input_layer_t = std::array<nnue_param_t, input_size>;
@@ -23,6 +24,7 @@ struct EvaluationNnueBase
     inline static input_weights_t input_weights;
     inline static input_biases_t input_biases;
     inline static hidden_weights_t hidden_weights;
+    //inline static hidden_weightses_t hidden_weightses;
     inline static hidden_bias_t hidden_bias;
 
     static constexpr Square get_index(const File file, const Rank rank)
