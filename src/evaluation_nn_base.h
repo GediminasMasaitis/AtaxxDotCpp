@@ -23,8 +23,8 @@ struct EvaluationNnueBase
 
     inline static input_weights_t input_weights;
     inline static input_biases_t input_biases;
-    inline static hidden_weights_t hidden_weights;
-    //inline static hidden_weightses_t hidden_weightses;
+    //inline static hidden_weights_t hidden_weights;
+    inline static hidden_weightses_t hidden_weightses;
     inline static hidden_bias_t hidden_bias;
 
     static constexpr Square get_index(const File file, const Rank rank)

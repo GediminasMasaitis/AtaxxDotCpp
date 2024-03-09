@@ -181,14 +181,6 @@ void Uai::handle_input(const std::string& command)
         {
             handle_position(reader);
         }
-        else if(token == "perft")
-        {
-            handle_perft(reader);
-        }
-        else if(token == "perftsuite")
-        {
-            Perft::perft_suite();
-        }
         else if(token == "go")
         {
             handle_go(reader);
@@ -199,6 +191,20 @@ void Uai::handle_input(const std::string& command)
         }
 
         // Extensions
+        else if (token == "perft")
+        {
+            handle_perft(reader);
+        }
+        else if (token == "perftsuite")
+        {
+            Perft::perft_suite();
+        }
+        else if (token == "move")
+        {
+            MoveStr moveStr;
+            reader >> moveStr;
+            current_pos.make_move_in_place(moveStr);
+        }
         else if (token == "d" || token == "display")
         {
             Display::display_position(current_pos);

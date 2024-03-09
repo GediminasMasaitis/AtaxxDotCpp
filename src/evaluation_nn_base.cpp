@@ -80,20 +80,20 @@ void EvaluationNnueBase::init()
     }
 
     ss << endl << "Weights 2: ";
-    for (auto i = 0; i < hidden_size; i++)
-    {
-        hidden_weights[i] = read(file);
-        ss << hidden_weights[i] << " ";
-    }
-
-    //for(Color color = 0; color < Colors::Count; color++)
+    //for (auto i = 0; i < hidden_size; i++)
     //{
-    //    for (auto i = 0; i < hidden_size; i++)
-    //    {
-    //        hidden_weightses[color][i] = read(file);
-    //        ss << hidden_weightses[color][i] << " ";
-    //    }
+    //    hidden_weights[i] = read(file);
+    //    ss << hidden_weights[i] << " ";
     //}
+
+    for(Color color = 0; color < Colors::Count; color++)
+    {
+        for (auto i = 0; i < hidden_size; i++)
+        {
+            hidden_weightses[color][i] = read(file);
+            ss << hidden_weightses[color][i] << " ";
+        }
+    }
 
     ss << endl << "Bias 2: ";
     hidden_bias = read(file);
