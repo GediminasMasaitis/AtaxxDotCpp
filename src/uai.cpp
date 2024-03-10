@@ -207,7 +207,21 @@ void Uai::handle_input(const std::string& command)
         }
         else if (token == "d" || token == "display")
         {
-            Display::display_position(current_pos);
+            Display::display_position(current_pos, nullopt);
+        }
+        else if (token == "ds" || token == "displaysearch")
+        {
+            SearchParameters parameters;
+            parameters.white_time = 1'000'000'000'000;
+            parameters.black_time = 1'000'000'000'000;
+            parameters.white_increment = 0;
+            parameters.black_increment = 0;
+            parameters.nodes_min = 1000000;
+            parameters.nodes_max = 1000000;
+            parameters.print_info = false;
+            parameters.print_bestmove = false;
+            read_search_parameters(reader, parameters);
+            Display::display_position(current_pos, parameters);
         }
         else if(token == "gi")
         {

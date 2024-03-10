@@ -64,6 +64,8 @@ struct SearchParameters
     Time black_increment = 100;
     NodeCount nodes_min = 0;
     NodeCount nodes_max = 0;
+    bool print_info = true;
+    bool print_bestmove = true;
 };
 
 struct PrincipalVariationData

@@ -2,16 +2,60 @@
 
 #include "fens.h"
 #include "evaluation.h"
+#include "search.h"
 
 #include <iomanip>
 #include <iostream>
+#include <optional>
 #include <sstream>
 
 using namespace std;
 
-void Display::display_position(const Position& pos)
+Score run_search(Position& pos, Square removed_sq, const SearchParameters parameters)
 {
-    const auto eval = Evaluation::evaluate_from_pov(pos);
+    if(removed_sq == no_square)
+    {
+        cout << "Initial search... ";
+    }
+    else
+    {
+        cout << "Searching without " << to_square_str(removed_sq) << "... ";
+    }
+    cout.flush();
+    Search search;
+    search.state.table.set_size(1024 * 1024 * 32);
+    search.state.clear();
+
+    const auto result = search.run(pos, parameters);
+    const auto pov_score = pos.Turn == Colors::White ? result.score : -result.score;
+    cout << "score cp " << pov_score << " pv ";
+    for (int i = 0; i < search.state.saved_pv.length; ++i)
+    {
+        const Move& pv_move = search.state.saved_pv.moves[i];
+        cout << pv_move.to_move_str() << " ";
+    }
+    cout << endl;
+    return result.score;
+}
+
+void Display::display_position(Position& pos, optional<SearchParameters> search_parameters)
+{
+    const bool do_search = search_parameters.has_value();
+    Score score;
+
+    if(do_search)
+    {
+        score = run_search(pos, no_square, search_parameters.value());
+    }
+    else
+    {
+        score = Evaluation::evaluate(pos);
+    }
+
+    if(pos.Turn == Colors::Black)
+    {
+        score = -score;
+    }
 
     stringstream ss;
     const std::string border = "+-------+-------+-------+-------+-------+-------+-------+\n";
@@ -55,11 +99,24 @@ void Display::display_position(const Position& pos)
             {
                 Position npos = pos;
                 npos.Squares[sq] = Pieces::Empty;
-                npos.Bitboards[Colors::White] &= ~get_bitboard(sq);
-                npos.Bitboards[Colors::Black] &= ~get_bitboard(sq);
+                npos.Bitboards[Pieces::White] &= ~get_bitboard(sq);
+                npos.Bitboards[Pieces::Black] &= ~get_bitboard(sq);
+                npos.Bitboards[Pieces::Empty] |= get_bitboard(sq);
                 npos.accumulators_unset(sq, piece);
-                const auto eval_without_piece = Evaluation::evaluate_from_pov(npos);
-                const auto diff = eval - eval_without_piece;
+                Score score_without_piece;
+                if (do_search)
+                {
+                    score_without_piece = run_search(npos, sq, search_parameters.value());
+                }
+                else
+                {
+                    score_without_piece = Evaluation::evaluate(npos);
+                }
+                if(pos.Turn == Colors::Black)
+                {
+                    score_without_piece = -score_without_piece;
+                }
+                const auto diff = score - score_without_piece;
 
                 const std::string diffStr = std::to_string(diff);
                 const auto padLeft = static_cast<int32_t>((7 - diffStr.size()) / 2);
@@ -100,7 +157,14 @@ void Display::display_position(const Position& pos)
     ss << "Empty: 0x" << hex << setfill('0') << setw(16) << pos.Bitboards[Pieces::Empty] << endl;
     ss << "Play:  0x" << hex << setfill('0') << setw(16) << pos.playable << endl;
     ss << endl;
-    ss << "Eval: " << dec << eval << endl;
+    if(do_search)
+    {
+        ss << "Search: " << dec << score << endl;
+    }
+    else
+    {
+        ss << "Eval: " << dec << score << endl;
+    }
 
     ss << endl;
     const auto str = ss.str();

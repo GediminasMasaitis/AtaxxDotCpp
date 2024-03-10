@@ -10,8 +10,6 @@
 
 using namespace std;
 
-constexpr bool print_info = !do_datagen;
-
 Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, const Score beta, const bool is_pv)
 {
     auto& ply_state = state.plies[ply];
@@ -177,7 +175,7 @@ SearchResult Search::iteratively_deepen(Position& pos)
             elapsed = 1;
         }
 
-        if constexpr (print_info)
+        if (state.parameters.print_info)
         {
             cout << "info";
             cout << " depth " << depth;
@@ -200,7 +198,7 @@ SearchResult Search::iteratively_deepen(Position& pos)
         }
     }
 
-    if constexpr (print_info)
+    if(state.parameters.print_bestmove)
     {
         const auto move_str = state.saved_pv.moves[0].to_move_str();
         cout << "bestmove " << move_str << endl;

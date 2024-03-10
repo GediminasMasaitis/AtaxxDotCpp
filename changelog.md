@@ -1395,4 +1395,8 @@ Score of AtaxxDotCpp-2.16 vs AtaxxDotCpp-2.15: 2558 - 2287 - 155  [0.527] 5000
 1+0.01:
 Score of AtaxxDotCpp-2.16-classical vs AtaxxDotCpp-1.17: 2682 - 2172 - 146  [0.551] 5000
 35.56 +/- 9.53
+
+10+0.1:
+Score of AtaxxDotCpp-2.16 vs Tiktaxx-tryhard: 941 - 42 - 17  [0.950] 1000
+509.68 +/- 47.89
 ```

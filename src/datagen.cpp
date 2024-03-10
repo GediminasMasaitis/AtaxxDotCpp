@@ -222,6 +222,8 @@ void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search
     SearchParameters parameters;
     parameters.nodes_min = 10000;
     parameters.nodes_max = 50000;
+    parameters.print_info = false;
+    parameters.print_bestmove = false;
 
     while(true)
     {
@@ -413,8 +415,8 @@ void Datagen::read()
             break;
         }
 
-        const auto pos = Fens::parse(line);
-        Display::display_position(pos);
+        auto pos = Fens::parse(line);
+        Display::display_position(pos, nullopt);
         cout << "WDL: " << line[line.length() - 1] << endl;
         cout << "NNUE: " << EvaluationNnue::evaluate(pos) << endl;
 
