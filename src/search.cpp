@@ -213,6 +213,9 @@ SearchResult Search::iteratively_deepen(Position& pos)
 SearchResult Search::run(Position& pos, const SearchParameters& parameters)
 {
     state.new_search(pos, parameters);
+    const auto original_enable_accumulator_stack = pos.enable_accumulator_stack;
+    pos.enable_accumulator_stack = true;
     const SearchResult result = iteratively_deepen(pos);
+    pos.enable_accumulator_stack = original_enable_accumulator_stack;
     return result;
 }

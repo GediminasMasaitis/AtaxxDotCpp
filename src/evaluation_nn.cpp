@@ -8,7 +8,7 @@
 
 using namespace std;
 
-Score EvaluationNnue::evaluate(const PositionNnue& pos)
+Score EvaluationNnue::evaluate(const Position& pos)
 {
     int32_t score = EvaluationNnueBase::hidden_bias * 128;
 
@@ -21,7 +21,7 @@ Score EvaluationNnue::evaluate(const PositionNnue& pos)
 
     for (auto c = 0; c < 2; c++)
     {
-        const auto& accumulator = pos.accumulators[pos.Turn ^ c];
+        const auto& accumulator = pos.accumulators_stack[pos.accumulator_index][pos.Turn ^ c];
         for (auto i = 0; i < EvaluationNnueBase::hidden_size; i++)
         {
             const auto relu = std::max(accumulator[i], static_cast<EvaluationNnueBase::nnue_param_t>(0));
@@ -35,7 +35,7 @@ Score EvaluationNnue::evaluate(const PositionNnue& pos)
     return final_score;
 }
 
-Score EvaluationNnue::evaluate_from_pov(const PositionNnue& pos, Color color)
+Score EvaluationNnue::evaluate_from_pov(const Position& pos, Color color)
 {
     Score score = evaluate(pos);
     if (pos.Turn != color)

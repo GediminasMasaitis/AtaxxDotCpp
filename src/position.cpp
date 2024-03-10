@@ -104,18 +104,64 @@ PositionBase PositionBase::make_move_copy(const MoveStr& move_str) const
     return make_move_copy(move);
 }
 
-void PositionNnue::accumulators_set(const Square sq, const Piece piece)
+void Position::accumulators_push()
 {
-    EvaluationNnueBase::apply_piece<true>(accumulators, sq, piece);
+    if constexpr (do_nnue)
+    {
+        if (!enable_accumulator_stack)
+        {
+            return;
+        }
+
+        accumulator_index++;
+        accumulators_stack[accumulator_index] = accumulators_stack[accumulator_index - 1];
+    }
 }
 
-void PositionNnue::accumulators_unset(const Square sq, const Piece piece)
+void Position::accumulators_pop()
 {
-    EvaluationNnueBase::apply_piece<false>(accumulators, sq, piece);
+    if constexpr (!do_nnue)
+    {
+        return;
+    }
+
+    if (!enable_accumulator_stack)
+    {
+        return;
+    }
+
+    accumulator_index--;
 }
 
-void PositionNnue::reset_accumulators()
+void Position::accumulators_set(const Square sq, const Piece piece)
 {
+    if constexpr (!do_nnue)
+    {
+        return;
+    }
+
+    EvaluationNnueBase::apply_piece<true>(accumulators_stack[accumulator_index], sq, piece);
+}
+
+void Position::accumulators_unset(const Square sq, const Piece piece)
+{
+    if constexpr (!do_nnue)
+    {
+        return;
+    }
+
+    EvaluationNnueBase::apply_piece<false>(accumulators_stack[accumulator_index], sq, piece);
+}
+
+void Position::reset_accumulators()
+{
+    if constexpr (!do_nnue)
+    {
+        return;
+    }
+
+    accumulator_index = 0;
+    auto& accumulators = accumulators_stack[accumulator_index];
     accumulators[Colors::White] = EvaluationNnueBase::input_biases;
     accumulators[Colors::Black] = EvaluationNnueBase::input_biases;
 
@@ -156,6 +202,8 @@ void Position::make_move_in_place(const Move& move)
         assert(verify_bitboards());
         return;
     }
+
+    accumulators_push();
 
     // TO
     assert(move.To != no_square);
@@ -222,7 +270,7 @@ void Position::unmake_move()
     Squares[move.To] = Pieces::Empty;
     Bitboards[move.Turn] &= ~get_bitboard(move.To);
     Bitboards[Pieces::Empty] |= get_bitboard(move.To);
-    accumulators_unset(move.To, move.Turn);
+    //accumulators_unset(move.To, move.Turn);
 
     // FROM
     if(undo_data.move.From != no_square)
@@ -232,7 +280,7 @@ void Position::unmake_move()
         Squares[move.From] = Turn;
         Bitboards[Turn] |= get_bitboard(move.From);
         Bitboards[Pieces::Empty] &= ~get_bitboard(move.From);
-        accumulators_set(move.From, move.Turn);
+        //accumulators_set(move.From, move.Turn);
     }
 
     // CAPTURE
@@ -242,8 +290,9 @@ void Position::unmake_move()
     {
         const auto attacked_square = pop_lsb(undo_data.captured);
         Squares[attacked_square] = !move.Turn;
-        accumulators_unset(attacked_square, move.Turn);
-        accumulators_set(attacked_square, !move.Turn);
+        //accumulators_unset(attacked_square, move.Turn);
+        //accumulators_set(attacked_square, !move.Turn);
     }
+    accumulators_pop();
     assert(verify_bitboards());
 }

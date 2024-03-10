@@ -1360,3 +1360,39 @@ Speed up NNUE slightly
 Score of AtaxxDotCpp-2.15 vs AtaxxDotCpp-2.14: 2458 - 2412 - 130  [0.505] 5000
 3.20 +/- 9.49
 ```
+
+### 2.16
+
+NNUE accumulator stack
+
+```
+info depth 1 time 1 score 59 nodes 9 nps 9000 pv f2
+info depth 2 time 1 score 70 nodes 56 nps 56000 pv f2 b2
+info depth 3 time 1 score 27 nodes 424 nps 424000 pv a7c6 a2 d6
+info depth 4 time 1 score 70 nodes 1682 nps 1682000 pv b6 f6 b5 a2
+info depth 5 time 1 score 41 nodes 6243 nps 6243000 pv b6 a2 b6d5 g7e5 a7c6
+info depth 6 time 3 score 49 nodes 20886 nps 6962000 pv b6 f6 a5 a2 b7 a2
+info depth 7 time 7 score 99 nodes 51703 nps 7386142 pv b6 f6 c5 b2 c4 b3 c5c3
+info depth 8 time 24 score 25 nodes 145852 nps 6077166 pv b6 f6 c7 b2 d7 g5 e6 g7e7
+info depth 9 time 73 score 70 nodes 423642 nps 5803315 pv b6 b2 c5 b3 d6 b3d1 c5e4 d1f1 e4g2
+info depth 10 time 231 score 56 nodes 1255801 nps 5436367 pv f2 b2 e3 f6 f4 e5 e3f5 e6g4 g6 f5
+info depth 11 time 465 score 49 nodes 2484660 nps 5343354 pv f2 b2 e3 c1 f2d2 c2 e3c3 c1d3 b3 d3b4 c2c4
+info depth 12 time 1068 score 49 nodes 5411053 nps 5066529 pv f2 b2 e3 c1 f2d2 c2 e3c3 c1d3 b3 d3b4 c2c4
+info depth 13 time 1590 score 49 nodes 8140282 nps 5119674 pv f2 b2 e2 b2 e1 a2 f3 a3 e2e4 e5 f2f4 f7
+info depth 14 time 5062 score 36 nodes 25502802 nps 5038088 pv f2 b2 e3 c1 d2 c2 e3d1 b1 d1c3 a2 c3d1 b3 c1c3
+info depth 15 time 10664 score 50 nodes 51765329 nps 4854213 pv b6 f6 c5 e5 d6 f6d5 c6 e6 d4 e6e4 c5e6 c5 e6c4 d3 c5e3
+info depth 16 time 13023 score 50 nodes 63479008 nps 4874376 pv b6 f6 c5 e5 d6 f6d5 b6d6 e4 c4 e6 d3 e5c3 e3 c3e5 c3
+info depth 17 time 29904 score 54 nodes 141054570 nps 4716913 pv b6 f6 c5 e5 d6 f6d5 c6 e6 d7 e5e7 c7 e6g4 d7f5 d5b7 c5a6
+info depth 18 time 56863 score 44 nodes 264563842 nps 4652653 pv b6 f6 c5 e5 d5 f6d6 c6 g7e6 b5 f4 c6e4 e6d4 c4 e4 c6d4 e7c5 c6
+info depth 19 time 65128 score 50 nodes 304919587 nps 4681850 pv b6 f6 c5 e5 d5 f6d6 c6 e6 d4 e6e4 c5e6 c5 e6c4 d3 c5e3 e4 f6d5 c4
+```
+
+```
+1+0.01:
+Score of AtaxxDotCpp-2.16 vs AtaxxDotCpp-2.15: 2558 - 2287 - 155  [0.527] 5000
+18.85 +/- 9.48
+
+1+0.01:
+Score of AtaxxDotCpp-2.16-classical vs AtaxxDotCpp-1.17: 2682 - 2172 - 146  [0.551] 5000
+35.56 +/- 9.53
+```

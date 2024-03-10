@@ -5,7 +5,7 @@
 
 struct Display
 {
-    static void display_position(const PositionNnue& pos);
+    static void display_position(const Position& pos);
 };
 
 #endif // !DISPLAY_H

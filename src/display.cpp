@@ -9,7 +9,7 @@
 
 using namespace std;
 
-void Display::display_position(const PositionNnue& pos)
+void Display::display_position(const Position& pos)
 {
     const auto eval = Evaluation::evaluate_from_pov(pos);
 
@@ -53,7 +53,7 @@ void Display::display_position(const PositionNnue& pos)
             const Piece piece = pos.Squares[sq];
             if(piece != Pieces::Empty)
             {
-                PositionNnue npos = pos;
+                Position npos = pos;
                 npos.Squares[sq] = Pieces::Empty;
                 npos.Bitboards[Colors::White] &= ~get_bitboard(sq);
                 npos.Bitboards[Colors::Black] &= ~get_bitboard(sq);
