@@ -33,7 +33,8 @@ struct DataEntry
     Score score;
 };
 
-constexpr int32_t input_size = 98;
+constexpr int32_t input_size = 49;
+constexpr int32_t input_sides = 2;
 constexpr int32_t hidden_size = 64;
 constexpr bool double_accumulator = true;
 using InputData = std::array<data_type, input_size>;
@@ -199,8 +200,8 @@ public:
         const auto us_stm = is_black ? reverse_bits(entry.black) : entry.white;
         const auto them_stm = is_black ? reverse_bits(entry.white) : entry.black;
 
-        const auto us_nstm = is_black ? entry.white : reverse_bits(entry.black);
-        const auto them_nstm = is_black ? entry.black : reverse_bits(entry.white);
+        //const auto us_nstm = is_black ? entry.white : reverse_bits(entry.black);
+        //const auto them_nstm = is_black ? entry.black : reverse_bits(entry.white);
 
         for (Rank rank = 0; rank < 7; rank++)
         {
@@ -210,18 +211,20 @@ public:
                 const auto index = get_index(file, rank);
 
                 input_data[0][index] = static_cast<data_type>((us_stm >> square) & 1);
-                input_data[0][49 + index] = static_cast<data_type>((them_stm >> square) & 1);
-
-                input_data[1][index] = static_cast<data_type>((us_nstm >> square) & 1);
-                input_data[1][49 + index] = static_cast<data_type>((them_nstm >> square) & 1);
+                input_data[1][index] = static_cast<data_type>((them_stm >> square) & 1);
+                //input_data[2][index] = static_cast<data_type>((us_nstm >> square) & 1);
+                //input_data[3][index] = static_cast<data_type>((them_nstm >> square) & 1);
             }
         }
 
         const auto wdl = is_black ? static_cast<data_type>(2 - entry.wdl) / 2 : static_cast<data_type>(entry.wdl) / 2;
         output_data[0] = wdl;
-        auto input_stm = torch::from_blob(input_data[0].data(), { input_size }, tensor_options);
-        auto input_nstm = torch::from_blob(input_data[1].data(), { input_size }, tensor_options);
-        auto input = torch::stack({ input_stm, input_nstm }).clone();
+        auto input_us_stm = torch::from_blob(input_data[0].data(), { input_size }, tensor_options);
+        auto input_them_stm = torch::from_blob(input_data[1].data(), { input_size }, tensor_options);
+        //auto input_us_nstm = torch::from_blob(input_data[2].data(), { input_size }, tensor_options);
+        //auto input_them_nstm = torch::from_blob(input_data[3].data(), { input_size }, tensor_options);
+
+        auto input = torch::stack({ input_us_stm, input_them_stm }).clone();
         auto target = torch::from_blob(output_data.data(), { 1 }, tensor_options).clone();
 
         return
@@ -286,15 +289,15 @@ struct Net : torch::nn::Module {
     torch::nn::Linear fc2{ nullptr };
 
     Net() {
-        fc1 = register_module("fc1", torch::nn::Linear(input_size, hidden_size));
+        fc1 = register_module("fc1", torch::nn::Linear(input_size * input_sides, hidden_size));
         fc2 = register_module("fc2", torch::nn::Linear(hidden_size * (double_accumulator ? 2 : 1), 1));
     }
 
-    torch::Tensor forward_inner(torch::Tensor x) {
+    torch::Tensor forward_inner(const torch::Tensor& us_stm, const torch::Tensor& them_stm, const torch::Tensor& us_nstm, const torch::Tensor& them_nstm) {
         if constexpr (double_accumulator)
         {
-            auto stm = x.select(1, 0);
-            auto nstm = x.select(1, 1);
+            auto stm = torch::cat({us_stm, them_stm}, 1);
+            auto nstm = torch::cat({us_nstm, them_nstm}, 1);
 
             stm = fc1->forward(stm);
             nstm = fc1->forward(nstm);
@@ -307,7 +310,7 @@ struct Net : torch::nn::Module {
         }
         else
         {
-            auto stm = x.select(1, 0);
+            auto stm = torch::cat({ us_stm, them_stm }, 1);
             stm = fc1->forward(stm);
             stm = torch::relu(stm);
             auto result = fc2->forward(stm);
@@ -315,15 +318,15 @@ struct Net : torch::nn::Module {
         }
     }
 
-    torch::Tensor forward(torch::Tensor x) {
-        auto result = forward_inner(x);
+    torch::Tensor forward(const torch::Tensor& us_stm, const torch::Tensor& them_stm, const torch::Tensor& us_nstm, const torch::Tensor& them_nstm) {
+        auto result = forward_inner(us_stm, them_stm, us_nstm, them_nstm);
         result = torch::sigmoid(result);
         return result;
     }
 
-    torch::Tensor forward_no_sig(torch::Tensor x)
+    torch::Tensor forward_no_sig(const torch::Tensor& us_stm, const torch::Tensor& them_stm, const torch::Tensor& us_nstm, const torch::Tensor& them_nstm)
     {
-        auto result = forward_inner(x);
+        auto result = forward_inner(us_stm, them_stm, us_nstm, them_nstm);
         result *= 512;
         return result;
     }
@@ -408,21 +411,21 @@ int main()
     auto device = torch::Device(torch::kCUDA);
 
     constexpr int32_t batch_size = 1024 * 128;
-    //constexpr int32_t batch_size = 1024 * 32;
+    //constexpr int32_t batch_size = 1024 * 16;
     //constexpr int32_t batch_size = 128;
 
     constexpr auto test_path = "C:/shared/ataxx/data/data_test.bin";
     auto test_reader = CachingReader(test_path);
     auto test_transient_set = TransientDataset(test_reader);
-    //auto test_set = CachingDataset(test_transient_set).map(torch::data::transforms::Stack<>());
-    auto test_set = test_transient_set.map(torch::data::transforms::Stack<>());
+    auto test_set = CachingDataset(test_transient_set).map(torch::data::transforms::Stack<>());
+    //auto test_set = test_transient_set.map(torch::data::transforms::Stack<>());
     auto test_size = test_set.size().value();
-    auto data_loader_options = torch::data::DataLoaderOptions();
-    data_loader_options.batch_size(batch_size);
-    data_loader_options.workers(10);
+    auto test_loader_options = torch::data::DataLoaderOptions();
+    test_loader_options.batch_size(batch_size);
+    test_loader_options.workers(2);
     //data_loader_options.enforce_ordering(false);
 
-    auto test_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(std::move(test_set), data_loader_options);
+    auto test_loader = torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(std::move(test_set), test_loader_options);
     print_time(start);
     cout << "Loaded test set" << endl;
 
@@ -433,10 +436,13 @@ int main()
     //constexpr auto limit = -1;
     auto train_reader = CachingReader(train_path, limit);
     auto train_transient_set = TransientDataset(train_reader);
-    //auto train_set = CachingDataset(train_transient_set).map(torch::data::transforms::Stack<>());
-    auto train_set = train_transient_set.map(torch::data::transforms::Stack<>());
+    auto train_set = CachingDataset(train_transient_set).map(torch::data::transforms::Stack<>());
+    //auto train_set = train_transient_set.map(torch::data::transforms::Stack<>());
     auto train_size = train_set.size().value();
-    auto train_loader = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(std::move(train_set), data_loader_options);
+    auto train_loader_options = torch::data::DataLoaderOptions();
+    train_loader_options.batch_size(batch_size);
+    train_loader_options.workers(12);
+    auto train_loader = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(std::move(train_set), train_loader_options);
     print_time(start);
     cout << "Loaded training set" << endl;
 
@@ -454,13 +460,22 @@ int main()
         const auto epoch_start = chrono::high_resolution_clock::now();
         for (auto& batch : *train_loader)
         {
+            optimizer.zero_grad();
+
             auto data = batch.data.to(device);
             auto target = batch.target.to(device);
 
-            optimizer.zero_grad();
+            auto us_stm = data.select(1, 0);
+            auto them_stm = data.select(1, 1);
+            auto us_nstm = torch::flip(them_stm, 1);
+            auto them_nstm = torch::flip(us_stm, 1);
 
-            torch::Tensor prediction = net.forward(data);
-            auto loss = criterion->forward(prediction, target);
+            auto prediction = net.forward(us_stm, them_stm, us_nstm, them_nstm);
+            auto prediction_reverse = net.forward(them_nstm, us_nstm, them_stm, us_stm);
+            auto predictions = torch::stack({ prediction, prediction_reverse });
+            auto targets = torch::stack({ target, target });
+
+            auto loss = criterion->forward(predictions, targets);
 
             loss.backward();
             optimizer.step();
@@ -476,7 +491,12 @@ int main()
             auto data = batch.data.to(device);
             auto target = batch.target.to(device);
 
-            torch::Tensor prediction = net.forward(data);
+            auto us_stm = data.select(1, 0);
+            auto them_stm = data.select(1, 1);
+            auto us_nstm = torch::flip(them_stm, 1);
+            auto them_nstm = torch::flip(us_stm, 1);
+
+            torch::Tensor prediction = net.forward(us_stm, them_stm, us_nstm, them_nstm);
             auto loss = criterion->forward(prediction, target);
 
             const auto this_batch_size = batch.data.size(0);
@@ -492,40 +512,40 @@ int main()
         print_params(net, epoch);
     }
 
-    torch::NoGradGuard no_grad;
+    //torch::NoGradGuard no_grad;
 
-    auto it = test_loader->begin();
-    auto sample_data = it->data.clone();
-    auto sample_target = it->target.reshape(-1);
+    //auto it = test_loader->begin();
+    //auto sample_data = it->data.clone();
+    //auto sample_target = it->target.reshape(-1);
 
-    stringstream ss;
-    ss << setprecision(5);
+    //stringstream ss;
+    //ss << setprecision(5);
 
-    ss << "Targets: " << endl;
-    for (auto i = 0; i < sample_data.size(0); i++)
-    {
-        ss << sample_target[i].item<data_type>() << " ";
-    }
-    ss << endl << endl;
+    //ss << "Targets: " << endl;
+    //for (auto i = 0; i < sample_data.size(0); i++)
+    //{
+    //    ss << sample_target[i].item<data_type>() << " ";
+    //}
+    //ss << endl << endl;
 
-    const auto predictions = net.forward(sample_data).reshape(-1);
-    const auto predictions_no_sig = net.forward_no_sig(sample_data).reshape(-1);
+    //const auto predictions = net.forward(sample_data).reshape(-1);
+    //const auto predictions_no_sig = net.forward_no_sig(sample_data).reshape(-1);
 
-    ss << "Predictions: " << endl;
-    for (auto i = 0; i < sample_data.size(0); i++)
-    {
-        ss << predictions[i].item<data_type>() << " ";
-    }
-    ss << endl << endl;
+    //ss << "Predictions: " << endl;
+    //for (auto i = 0; i < sample_data.size(0); i++)
+    //{
+    //    ss << predictions[i].item<data_type>() << " ";
+    //}
+    //ss << endl << endl;
 
-    ss << "Predictions no sigmoid: ";
-    for (auto i = 0; i < sample_data.size(0); i++)
-    {
-        ss << predictions_no_sig[i].item<data_type>() << " ";
-    }
-    ss << endl << endl;
-    auto str = ss.str();
-    cout << str;
+    //ss << "Predictions no sigmoid: ";
+    //for (auto i = 0; i < sample_data.size(0); i++)
+    //{
+    //    ss << predictions_no_sig[i].item<data_type>() << " ";
+    //}
+    //ss << endl << endl;
+    //auto str = ss.str();
+    //cout << str;
 
     return 0;
 }
