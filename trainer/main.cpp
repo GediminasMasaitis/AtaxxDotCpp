@@ -33,16 +33,120 @@ struct DataEntry
     Score score;
 };
 
-DataEntry read_entry(ifstream& file)
+constexpr int32_t input_size = 98;
+constexpr int32_t hidden_size = 64;
+constexpr bool double_accumulator = true;
+using InputData = std::array<data_type, input_size>;
+using InputDatas = std::array<InputData, 2>;
+using OutputData = std::array<data_type, 1>;
+
+struct IDataProvider
 {
-    DataEntry entry;
-    file.read(reinterpret_cast<char*>(&entry.white), sizeof(entry.white));
-    file.read(reinterpret_cast<char*>(&entry.black), sizeof(entry.black));
-    file.read(reinterpret_cast<char*>(&entry.turn), sizeof(entry.turn));
-    file.read(reinterpret_cast<char*>(&entry.wdl), sizeof(entry.wdl));
-    file.read(reinterpret_cast<char*>(&entry.score), sizeof(entry.score));
-    return entry;
-}
+    virtual ~IDataProvider() {}
+    virtual DataEntry get(size_t index) = 0;
+    virtual size_t size() const = 0;
+};
+
+struct Reader : IDataProvider
+{
+private:
+    constexpr static size_t file_entry_size = sizeof(Bitboard) + sizeof(Bitboard) + sizeof(Color) + sizeof(Wdl) + sizeof(Score);
+
+    ifstream file;
+    size_t entry_count;
+
+public:
+    Reader(const string& path, const size_t read_limit = 0)
+    {
+        cout << "Opening " << path << ": ";
+
+        const auto fs_path = filesystem::path(path);
+        if (!filesystem::exists(fs_path))
+        {
+            cerr << path << " doesn't exist";
+            throw exception();
+        }
+
+        const auto size = filesystem::file_size(fs_path);
+        entry_count = size / file_entry_size;
+
+        file = ifstream(path, ios::binary);
+        if (!file)
+        {
+            cerr << "Failed to open file: " << path << endl;
+            throw exception();
+        }
+
+        cout << size << " bytes, ";
+        cout << entry_count << " entries";
+        if(read_limit > 0)
+        {
+            cout << ", limit " << read_limit;
+            entry_count = read_limit;
+        }
+        cout << endl;
+    }
+
+    DataEntry get(size_t index) override
+    {
+        const size_t offset = index * file_entry_size;
+        file.seekg(offset);
+
+        DataEntry entry;
+        file.read(reinterpret_cast<char*>(&entry.white), sizeof(entry.white));
+        file.read(reinterpret_cast<char*>(&entry.black), sizeof(entry.black));
+        file.read(reinterpret_cast<char*>(&entry.turn), sizeof(entry.turn));
+        file.read(reinterpret_cast<char*>(&entry.wdl), sizeof(entry.wdl));
+        file.read(reinterpret_cast<char*>(&entry.score), sizeof(entry.score));
+
+        return entry;
+    }
+
+    size_t size() const override
+    {
+        return entry_count;
+    }
+};
+
+struct CachingReader : Reader
+{
+private:
+    vector<DataEntry> cache;
+
+public:
+    CachingReader(const string& path, const size_t read_limit = 0, size_t cache_limit = 0) : Reader(path, read_limit)
+    {
+        cache = vector<DataEntry>();
+        if(cache_limit == 0)
+        {
+            cache_limit = read_limit;
+        }
+
+        cache_limit = min(read_limit, cache_limit);
+        cache.reserve(cache_limit);
+        for(size_t index = 0; index < cache_limit; index++)
+        {
+            const auto entry = Reader::get(index);
+            cache.push_back(entry);
+
+            constexpr size_t print_every = 1000000;
+            if (index % print_every == print_every - 1 || index == size() - 1)
+            {
+                cout << "Cached " << index + 1 << " entries" << endl;
+            }
+        }
+    }
+
+    DataEntry get(size_t index) override
+    {
+        if(index < cache.size())
+        {
+            return cache[index];
+        }
+
+        return Reader::get(index);
+    }
+};
 
 static constexpr Square get_square(const File file, const Rank rank)
 {
@@ -53,13 +157,6 @@ static constexpr Square get_index(const File file, const Rank rank)
 {
     return rank * 7 + file;
 }
-
-constexpr int32_t input_size = 98;
-constexpr int32_t hidden_size = 64;
-constexpr bool double_accumulator = true;
-using InputData = std::array<data_type, input_size>;
-using InputDatas = std::array<InputData, 2>;
-using OutputData = std::array<data_type, 1>;
 
 constexpr Bitboard reverse_bits(Bitboard bitboard)
 {
@@ -78,93 +175,98 @@ constexpr Bitboard reverse_bits(Bitboard bitboard)
     return bitboard;
 }
 
-class MyDataset : public torch::data::Dataset<MyDataset>
+struct TransientDataset : torch::data::Dataset<TransientDataset>
+{
+private:
+    IDataProvider& _provider;
+
+    const torch::TensorOptions tensor_options = torch::TensorOptions().dtype(data_type_val);
+    
+public:
+    TransientDataset(IDataProvider& provider) : _provider(provider)
+    {
+    }
+
+    torch::data::Example<> get(const size_t index) override
+    {
+        const auto entry = _provider.get(index);
+
+        InputDatas input_data;
+        OutputData output_data;
+
+        const auto is_black = entry.turn == 1;
+
+        const auto us_stm = is_black ? reverse_bits(entry.black) : entry.white;
+        const auto them_stm = is_black ? reverse_bits(entry.white) : entry.black;
+
+        const auto us_nstm = is_black ? entry.white : reverse_bits(entry.black);
+        const auto them_nstm = is_black ? entry.black : reverse_bits(entry.white);
+
+        for (Rank rank = 0; rank < 7; rank++)
+        {
+            for (File file = 0; file < 7; file++)
+            {
+                const auto square = get_square(file, rank);
+                const auto index = get_index(file, rank);
+
+                input_data[0][index] = static_cast<data_type>((us_stm >> square) & 1);
+                input_data[0][49 + index] = static_cast<data_type>((them_stm >> square) & 1);
+
+                input_data[1][index] = static_cast<data_type>((us_nstm >> square) & 1);
+                input_data[1][49 + index] = static_cast<data_type>((them_nstm >> square) & 1);
+            }
+        }
+
+        const auto wdl = is_black ? static_cast<data_type>(2 - entry.wdl) / 2 : static_cast<data_type>(entry.wdl) / 2;
+        output_data[0] = wdl;
+        auto input_stm = torch::from_blob(input_data[0].data(), { input_size }, tensor_options);
+        auto input_nstm = torch::from_blob(input_data[1].data(), { input_size }, tensor_options);
+        auto input = torch::stack({ input_stm, input_nstm }).clone();
+        auto target = torch::from_blob(output_data.data(), { 1 }, tensor_options).clone();
+
+        return
+        {
+            input,
+            target
+        };
+    }
+
+    optional<size_t> size() const override
+    {
+        return _provider.size();
+    }
+};
+
+class CachingDataset : public torch::data::Dataset<CachingDataset>
 {
 public:
     vector<torch::Tensor> inputs;
     vector<torch::Tensor> targets;
 
-    explicit MyDataset(const string& path, int limit = -1)
+    explicit CachingDataset(TransientDataset& dataset)
     {
-        const auto size = filesystem::file_size(filesystem::path(path));
-        constexpr auto entry_size = sizeof(Bitboard) + sizeof(Bitboard) + sizeof(Color) + sizeof(Wdl) + sizeof(Score);
-        const auto entry_count = size / entry_size;
+        assert(dataset.size().has_value());
 
-        cout << "Loading " << path << endl;
-        cout << size << " bytes" << endl;
-        cout << entry_count << " entries" << endl;
+        const auto size = dataset.size().value();
+        inputs.reserve(size);
+        targets.reserve(size);
 
-        //vector<InputDatas> inputs_data;
-        //vector<OutputData> outputs_data;
-
-        //inputs_data.resize(entry_count);
-        //outputs_data.resize(entry_count);
-
-        inputs.reserve(entry_count);
-        targets.reserve(entry_count);
-
-        auto stream = ifstream(path, ios::binary);
-        if (!stream.is_open())
+        for (size_t entry_index = 0; entry_index < dataset.size(); entry_index++)
         {
-            cerr << "Failed to open file: " << path << endl;
-            throw exception();
-        }
+            const auto entry = dataset.get(entry_index);
 
-        const auto tensor_options = torch::TensorOptions().dtype(data_type_val);
+            inputs.push_back(entry.data);
+            targets.push_back(entry.target);
 
-        for (size_t entry_index = 0; entry_index < entry_count; entry_index++)
-        {
-            const auto entry = read_entry(stream);
-
-            InputDatas input_data;
-            OutputData output_data;
-
-            const auto is_black = entry.turn == 1;
-
-            const auto us_stm = is_black ? reverse_bits(entry.black) : entry.white;
-            const auto them_stm = is_black ? reverse_bits(entry.white) : entry.black;
-
-            const auto us_nstm = is_black ? entry.white : reverse_bits(entry.black);
-            const auto them_nstm = is_black ? entry.black : reverse_bits(entry.white);
-
-            for (Rank rank = 0; rank < 7; rank++)
+            constexpr size_t print_every = 1000000;
+            if (entry_index % print_every == print_every - 1 || entry_index == size - 1)
             {
-                for (File file = 0; file < 7; file++)
-                {
-                    const auto square = get_square(file, rank);
-                    const auto index = get_index(file, rank);
-
-                    input_data[0][index] = static_cast<data_type>((us_stm >> square) & 1);
-                    input_data[0][49 + index] = static_cast<data_type>((them_stm >> square) & 1);
-
-                    input_data[1][index] = static_cast<data_type>((us_nstm >> square) & 1);
-                    input_data[1][49 + index] = static_cast<data_type>((them_nstm >> square) & 1);
-                }
-            }
-
-            const auto wdl = is_black ? static_cast<data_type>(2 - entry.wdl) / 2 : static_cast<data_type>(entry.wdl) / 2;
-            output_data[0] = wdl;
-            auto input_stm = torch::from_blob(input_data[0].data(), { input_size }, tensor_options);
-            auto input_nstm = torch::from_blob(input_data[1].data(), { input_size }, tensor_options);
-            auto input = torch::stack({ input_stm, input_nstm }).clone();
-            auto target = torch::from_blob(output_data.data(), { 1 }, tensor_options).clone();
-
-            inputs.push_back(input);
-            targets.push_back(target);
-
-            if (entry_index % 1000000 == 0)
-            {
-                cout << "Loaded " << entry_index << " entries" << endl;
-            }
-
-            if (entry_index == limit)
-            {
-                break;
+                cout << "Loaded " << entry_index + 1 << " entries" << endl;
             }
         }
     }
 
-    torch::data::Example<> get(size_t index) override
+    torch::data::Example<> get(const size_t index) override
     {
         return
         {
@@ -310,7 +412,10 @@ int main()
     //constexpr int32_t batch_size = 128;
 
     constexpr auto test_path = "C:/shared/ataxx/data/data_test.bin";
-    auto test_set = MyDataset(test_path).map(torch::data::transforms::Stack<>());
+    auto test_reader = CachingReader(test_path);
+    auto test_transient_set = TransientDataset(test_reader);
+    //auto test_set = CachingDataset(test_transient_set).map(torch::data::transforms::Stack<>());
+    auto test_set = test_transient_set.map(torch::data::transforms::Stack<>());
     auto test_size = test_set.size().value();
     auto data_loader_options = torch::data::DataLoaderOptions();
     data_loader_options.batch_size(batch_size);
@@ -326,7 +431,10 @@ int main()
     //constexpr auto train_path = "C:/shared/ataxx/data/data_train_small.bin";
     constexpr auto limit = 22'000'000;
     //constexpr auto limit = -1;
-    auto train_set = MyDataset(train_path, limit).map(torch::data::transforms::Stack<>());
+    auto train_reader = CachingReader(train_path, limit);
+    auto train_transient_set = TransientDataset(train_reader);
+    //auto train_set = CachingDataset(train_transient_set).map(torch::data::transforms::Stack<>());
+    auto train_set = train_transient_set.map(torch::data::transforms::Stack<>());
     auto train_size = train_set.size().value();
     auto train_loader = torch::data::make_data_loader<torch::data::samplers::RandomSampler>(std::move(train_set), data_loader_options);
     print_time(start);
