@@ -35,7 +35,7 @@ struct DataEntry
 
 constexpr int32_t input_size = 49;
 constexpr int32_t input_sides = 2;
-constexpr int32_t hidden_size = 128;
+constexpr int32_t hidden_size = 256;
 constexpr bool double_accumulator = true;
 using InputData = std::array<data_type, input_size>;
 using InputDatas = std::array<InputData, 2>;
