@@ -469,11 +469,18 @@ int main()
             auto them_stm = data.select(1, 1);
             auto us_nstm = torch::flip(them_stm, 1);
             auto them_nstm = torch::flip(us_stm, 1);
-
             auto prediction = net.forward(us_stm, them_stm, us_nstm, them_nstm);
-            auto prediction_reverse = net.forward(them_nstm, us_nstm, them_stm, us_stm);
-            auto predictions = torch::stack({ prediction, prediction_reverse });
-            auto targets = torch::stack({ target, target });
+            auto prediction_rotate = net.forward(them_nstm, us_nstm, them_stm, us_stm);
+
+            us_stm = us_stm.view({-1, 7, 7}).transpose(1, 2).reshape({-1, 49});
+            them_stm = them_stm.view({-1, 7, 7}).transpose(1, 2).reshape({-1, 49});
+            us_nstm = torch::flip(them_stm, 1);
+            them_nstm = torch::flip(us_stm, 1);
+            auto prediction_diagonal = net.forward(us_stm, them_stm, us_nstm, them_nstm);
+            auto prediction_diagonal_rotate = net.forward(them_nstm, us_nstm, them_stm, us_stm);
+
+            auto predictions = torch::stack({ prediction, prediction_rotate, prediction_diagonal, prediction_diagonal_rotate });
+            auto targets = torch::stack({ target, target, target, target });
 
             auto loss = criterion->forward(predictions, targets);
 
