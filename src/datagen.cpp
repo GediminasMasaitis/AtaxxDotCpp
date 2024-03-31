@@ -4,10 +4,12 @@
 #include "evaluation.h"
 #include "fens.h"
 #include "movegen.h"
+#include "moveorder.h"
 #include "search.h"
 
 #include <cassert>
 #include <chrono>
+#include <filesystem>
 #include <iomanip>
 #include <iostream>
 #include <fstream>
@@ -397,17 +399,110 @@ void Datagen::run()
     }
 }
 
+struct DatagenResultExt
+{
+    Bitboard white;
+    Bitboard black;
+    Color turn;
+    Wdl wdl;
+    Score score;
+    Square from;
+    Square to;
+};
+
+DatagenResultExt get(ifstream& file)
+{
+    DatagenResultExt entry;
+    file.read(reinterpret_cast<char*>(&entry.white), sizeof(entry.white));
+    file.read(reinterpret_cast<char*>(&entry.black), sizeof(entry.black));
+    file.read(reinterpret_cast<char*>(&entry.turn), sizeof(entry.turn));
+    file.read(reinterpret_cast<char*>(&entry.wdl), sizeof(entry.wdl));
+    file.read(reinterpret_cast<char*>(&entry.score), sizeof(entry.score));
+
+    return entry;
+}
+
+void write_ext(ofstream& file, const DatagenResultExt& entry)
+{
+    file.write(reinterpret_cast<const char*>(&entry.white), sizeof(entry.white));
+    file.write(reinterpret_cast<const char*>(&entry.black), sizeof(entry.black));
+    file.write(reinterpret_cast<const char*>(&entry.turn), sizeof(entry.turn));
+    file.write(reinterpret_cast<const char*>(&entry.wdl), sizeof(entry.wdl));
+    file.write(reinterpret_cast<const char*>(&entry.score), sizeof(entry.score));
+    file.write(reinterpret_cast<const char*>(&entry.from), sizeof(entry.from));
+    file.write(reinterpret_cast<const char*>(&entry.to), sizeof(entry.to));
+}
+
+void set_pos(PositionBase& pos, const DatagenResultExt& entry)
+{
+    pos.Bitboards[Pieces::White] = entry.white;
+    pos.Bitboards[Pieces::Black] = entry.black;
+    pos.Bitboards[Pieces::Wall] = 0ULL;
+    pos.Bitboards[Pieces::Empty] = ~(pos.Bitboards[Pieces::White] | pos.Bitboards[Pieces::Black]) & available_position;
+    for (Rank rank = 0; rank < 7; rank++)
+    {
+        for (File file = 0; file < 7; file++)
+        {
+            const auto square = get_square(rank, file);
+            auto bb = get_bitboard(square);
+            if (pos.Bitboards[Pieces::Empty] & bb)
+            {
+                pos.Squares[square] = Pieces::Empty;
+            }
+            else if (pos.Bitboards[Pieces::White] & bb)
+            {
+                pos.Squares[square] = Pieces::White;
+            }
+            else if (pos.Bitboards[Pieces::Black] & bb)
+            {
+                pos.Squares[square] = Pieces::Black;
+            }
+        }
+    }
+    pos.Turn = entry.turn;
+}
+
 void Datagen::read()
 {
-    constexpr auto path = "C:/shared/ataxx/data/data_test.epd";
-    auto file = ifstream(path, ios::in);
-    if(!file.good())
-    {
-        cout << "Failed to open file: " << path << endl;
-        return;
+#if DO_POLICY
+    const auto path = "C:/shared/ataxx/data/data3M-policy.bin";
+    auto file = ifstream(path);
+
+    auto entry = get(file);
+    Position pos;
+    set_pos(pos, entry);
+
+    Display::display_position(pos, nullopt);
+    MoveOrder::get_all_policy_scores(pos);
+#endif
+}
+
+std::vector<std::string> split_by_delimiter(const std::string& str, const std::string& delimiter) {
+    std::vector<std::string> tokens;
+    size_t start = 0, end = 0;
+
+    // Loop until we have parsed the whole string
+    while ((end = str.find(delimiter, start)) != std::string::npos) {
+        // Extract substring from start to end
+        tokens.push_back(str.substr(start, end - start));
+        // Move the start position past this delimiter
+        start = end + delimiter.length();
     }
+    // Add the last token
+    tokens.push_back(str.substr(start));
+
+    return tokens;
+}
+
+void Datagen::convert2()
+{
+    const auto path = "C:/shared/ataxx/data/Zataxx-67M.txt";
+    const auto out_path = "C:/shared/ataxx/data/Zataxx-67M-policy.bin";
+    auto file = ifstream(path);
+    auto out_file = ofstream(out_path, ios::binary);
 
     string line;
+    auto index = 0;
     while(getline(file, line))
     {
         if(line.empty())
@@ -415,12 +510,151 @@ void Datagen::read()
             break;
         }
 
-        auto pos = Fens::parse(line);
-        Display::display_position(pos, nullopt);
-        cout << "WDL: " << line[line.length() - 1] << endl;
-        cout << "NNUE: " << EvaluationNnue::evaluate(pos) << endl;
+        auto tokens = split_by_delimiter(line, " | ");
 
-        auto a = 123;
+        auto pos = Fens::parse(tokens[0]);
+        //Display::display_position(pos, nullopt);
+        //cout << "WDL: " << line[line.length() - 1] << endl;
+        //cout << "NNUE: " << EvaluationNnue::evaluate(pos) << endl;
+
+        DatagenResultExt entry;
+        entry.white = pos.Bitboards[Pieces::White];
+        entry.black = pos.Bitboards[Pieces::Black];
+        entry.turn = pos.Turn;
+        auto move_str = tokens[1];
+        if(move_str == "0000")
+        {
+            continue;
+        }
+        auto move = Move::from_move_str(pos.Turn, move_str);
+        entry.from = move.From;
+        entry.to = move.To;
+        entry.score = stoi(tokens[2]);
+        auto wdl = stof(tokens[3]);
+        auto wdl2 = static_cast<int8_t>(2 - (wdl * 2));
+        entry.wdl = wdl2;
+
+        write_ext(out_file, entry);
+
+        constexpr size_t print_every = 1000000;
+        if (index % print_every == print_every - 1)
+        {
+            cout << "Read " << index + 1 << " entries" << endl;
+        }
+        index++;
     }
+    out_file.flush();
+}
+
+void Datagen::convert()
+{
+    constexpr static size_t file_entry_size = sizeof(Bitboard) + sizeof(Bitboard) + sizeof(Color) + sizeof(Wdl) + sizeof(Score);
+    const auto path = "C:/shared/ataxx/data/data100M.bin";
+    const auto out_path = "C:/shared/ataxx/data/data100M-policy.bin";
+    const auto fs_path = filesystem::path(path);
+    if (!filesystem::exists(fs_path))
+    {
+        cerr << path << " doesn't exist";
+        throw exception();
+    }
+
+    const auto file_size = filesystem::file_size(fs_path);
+    auto entry_count = file_size / file_entry_size;
+    //entry_count = 100000;
+
+    auto file = ifstream(path, ios::binary);
+    if (!file)
+    {
+        cerr << "Failed to open file: " << path << endl;
+        throw exception();
+    }
+
+    auto out_file = ofstream(out_path, ios::binary);
+
+    constexpr size_t print_every = 1000000;
+    vector<DatagenResultExt> entries;
+    entries.reserve(entry_count);
+
+    for(auto index = 0; index < entry_count; index++)
+    {
+        auto entry = get(file);
+        entries.push_back(entry);
+        if (index % print_every == print_every - 1 || index == entry_count - 1)
+        {
+            cout << "Read " << index + 1 << " entries" << endl;
+        }
+    }
+
+    cout << "Read " << entries.size() << " entries" << endl;
+
+    for (size_t index = 0; index < entry_count; index++)
+    {
+        //cout << index << endl;
+        auto& entry = entries[index];
+        PositionBase pos;
+        set_pos(pos, entry);
+
+        //Display::display_position(pos, nullopt);
+
+        auto& next_entry = entries[index + 1];
+        PositionBase next_pos;
+        set_pos(next_pos, next_entry);
+
+        MoveArray moves;
+        MoveCount move_count = 0;
+        MoveGenerator::generate_all(pos, moves, move_count);
+
+        Move best_move;
+        bool best_found = false;
+        if(move_count == 1)
+        {
+            best_move = moves[0];
+            best_found = true;
+            //cout << "A";
+        }
+        else
+        {
+            //cout << "B";
+            for (MoveCount move_index = 0; move_index < move_count; move_index++)
+            {
+                const auto move = moves[move_index];
+                auto npos = pos.make_move_copy(move);
+                if
+                (
+                    npos.Bitboards[Pieces::White] == next_pos.Bitboards[Pieces::White]
+                    && npos.Bitboards[Pieces::Black] == next_pos.Bitboards[Pieces::Black]
+                    && npos.Turn == next_pos.Turn
+                )
+                {
+                    best_move = move;
+                    if (best_found)
+                    {
+                        cout << "Multiple best moves found" << endl;
+                        break;
+                    }
+                    best_found = true;
+                }
+            }
+        }
+
+        if(best_found && best_move != passes[Colors::White] && best_move != passes[Colors::White] && best_move.To != no_square)
+        {
+            entry.from = best_move.From;
+            entry.to = best_move.To;
+            auto a = 123;
+            write_ext(out_file, entry);
+        }
+
+        //Display::display_position(pos, nullopt);
+        //cout << "Best move: " << best_move.to_move_str() << endl;
+
+        if (index == entry_count - 2)
+        {
+            break;
+        }
+    }
+
+    out_file.flush();
+    cout << "Done" << endl;
     
 }

@@ -9,7 +9,7 @@ MoveStr Move::to_move_str() const
 {
     if(*this == passes[Turn])
     {
-        return "pass";
+        return "0000";
     }
 
     MoveStr to_str = to_square_str(To);

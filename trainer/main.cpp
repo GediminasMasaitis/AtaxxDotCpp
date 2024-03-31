@@ -1,3 +1,5 @@
+#include "../src/attacks.h"
+
 #include <torch/torch.h>
 
 #include <array>
@@ -31,14 +33,37 @@ struct DataEntry
     Color turn;
     Wdl wdl;
     Score score;
+    Square from;
+    Square to;
 };
+
+#define POLICY 0
+
+#if POLICY
+static constexpr bool do_policy = true;
+#else
+static constexpr bool do_policy = false;
+#endif
+
+
+#define POLICYFORMAT 0
+#if POLICYFORMAT
+static constexpr bool policyformat = true;
+#else
+static constexpr bool policyformat = false;
+#endif
 
 constexpr int32_t input_size = 49;
 constexpr int32_t input_sides = 2;
 constexpr int32_t hidden_size = 256;
 constexpr bool double_accumulator = true;
+
+constexpr int32_t policy_hidden_size = 128;
+constexpr int32_t policy_output_size = 610;
+
 using InputData = std::array<data_type, input_size>;
 using InputDatas = std::array<InputData, 2>;
+
 using OutputData = std::array<data_type, 1>;
 
 struct IDataProvider
@@ -51,7 +76,11 @@ struct IDataProvider
 struct Reader : IDataProvider
 {
 private:
+#if POLICYFORMAT
+    constexpr static size_t file_entry_size = sizeof(Bitboard) + sizeof(Bitboard) + sizeof(Color) + sizeof(Wdl) + sizeof(Score) + sizeof(Square) + sizeof(Square);
+#else
     constexpr static size_t file_entry_size = sizeof(Bitboard) + sizeof(Bitboard) + sizeof(Color) + sizeof(Wdl) + sizeof(Score);
+#endif;
 
     ifstream file;
     size_t entry_count;
@@ -80,7 +109,7 @@ public:
 
         cout << size << " bytes, ";
         cout << entry_count << " entries";
-        if(read_limit > 0)
+        if(read_limit > 0 && read_limit < entry_count)
         {
             cout << ", limit " << read_limit;
             entry_count = read_limit;
@@ -99,7 +128,11 @@ public:
         file.read(reinterpret_cast<char*>(&entry.turn), sizeof(entry.turn));
         file.read(reinterpret_cast<char*>(&entry.wdl), sizeof(entry.wdl));
         file.read(reinterpret_cast<char*>(&entry.score), sizeof(entry.score));
-
+        if constexpr (policyformat)
+        {
+            file.read(reinterpret_cast<char*>(&entry.from), sizeof(entry.from));
+            file.read(reinterpret_cast<char*>(&entry.to), sizeof(entry.to));
+        }
         return entry;
     }
 
@@ -122,8 +155,8 @@ public:
         {
             cache_limit = read_limit;
         }
-
-        cache_limit = min(read_limit, cache_limit);
+        cache_limit = min(size(), cache_limit);
+        cout << "Caching " << cache_limit << " entries" << endl;
         cache.reserve(cache_limit);
         for(size_t index = 0; index < cache_limit; index++)
         {
@@ -149,32 +182,80 @@ public:
     }
 };
 
-static constexpr Square get_square(const File file, const Rank rank)
-{
-    return rank * 8 + file;
-}
-
 static constexpr Square get_index(const File file, const Rank rank)
 {
     return rank * 7 + file;
 }
 
-constexpr Bitboard reverse_bits(Bitboard bitboard)
+struct SquareToIndexClass
 {
-    const Bitboard h1 = 0x5555555555555555;
-    const Bitboard h2 = 0x3333333333333333;
-    const Bitboard h4 = 0x0F0F0F0F0F0F0F0F;
-    const Bitboard v1 = 0x00FF00FF00FF00FF;
-    const Bitboard v2 = 0x0000FFFF0000FFFF;
-    bitboard = ((bitboard >> 1) & h1) | ((bitboard & h1) << 1);
-    bitboard = ((bitboard >> 2) & h2) | ((bitboard & h2) << 2);
-    bitboard = ((bitboard >> 4) & h4) | ((bitboard & h4) << 4);
-    bitboard = ((bitboard >> 8) & v1) | ((bitboard & v1) << 8);
-    bitboard = ((bitboard >> 16) & v2) | ((bitboard & v2) << 16);
-    bitboard = (bitboard >> 32) | (bitboard << 32);
-    bitboard >>= 9;
-    return bitboard;
-}
+    std::array<Square, 64> values;
+
+    static constexpr Square get_index(const File file, const Rank rank)
+    {
+        return rank * 7 + file;
+    }
+
+    static constexpr Square get_square_to_index(const Square sq)
+    {
+        return get_index(get_file(sq), get_rank(sq));
+    }
+
+    constexpr SquareToIndexClass()
+    {
+        values = {};
+        for (Square sq = 0; sq < 64; sq++)
+        {
+            values[sq] = get_square_to_index(sq);
+        }
+        values[no_square] = 49;
+    }
+};
+
+static constexpr SquareToIndexClass square_to_index = SquareToIndexClass();
+
+struct PolicyIndexesClass
+{
+    std::array<std::array<int16_t, 64>, 64> values;
+
+    constexpr PolicyIndexesClass()
+    {
+        values = {};
+        for (Square from = 0; from < 64; from++)
+        {
+            for (Square to = 0; to < 64; to++)
+            {
+                values[from][to] = -1;
+            }
+        }
+
+        uint16_t index = 0;
+        for (Rank rank = 0; rank < 7; rank++)
+        {
+            for (File file = 0; file < 7; file++)
+            {
+                const auto sq = get_square(file, rank);
+                values[no_square][sq] = index++;
+            }
+        }
+        for (Rank rank = 0; rank < 7; rank++)
+        {
+            for (File file = 0; file < 7; file++)
+            {
+                const auto from = get_square(file, rank);
+                auto bb = Attacks.far[from];
+                while (bb)
+                {
+                    const auto to = lsb(bb);
+                    bb &= bb - 1;
+                    values[from][to] = index++;
+                }
+            }
+        }
+    }
+};
+
+static constexpr PolicyIndexesClass policy_indexes = PolicyIndexesClass();
 
 struct TransientDataset : torch::data::Dataset<TransientDataset>
 {
@@ -182,6 +263,7 @@ private:
     IDataProvider& _provider;
 
     const torch::TensorOptions tensor_options = torch::TensorOptions().dtype(data_type_val);
+    const torch::TensorOptions tensor_options_index = torch::TensorOptions().dtype(torch::ScalarType::Long);
     
 public:
     TransientDataset(IDataProvider& provider) : _provider(provider)
@@ -193,9 +275,11 @@ public:
         const auto entry = _provider.get(index);
 
         InputDatas input_data;
-        OutputData output_data;
 
         const auto is_black = entry.turn == 1;
+
+        //const auto us_stm = entry.white;
+        //const auto them_stm = entry.black;
 
         const auto us_stm = is_black ? reverse_bits(entry.black) : entry.white;
         const auto them_stm = is_black ? reverse_bits(entry.white) : entry.black;
@@ -217,15 +301,41 @@ public:
             }
         }
 
-        const auto wdl = is_black ? static_cast<data_type>(2 - entry.wdl) / 2 : static_cast<data_type>(entry.wdl) / 2;
-        output_data[0] = wdl;
         auto input_us_stm = torch::from_blob(input_data[0].data(), { input_size }, tensor_options);
         auto input_them_stm = torch::from_blob(input_data[1].data(), { input_size }, tensor_options);
         //auto input_us_nstm = torch::from_blob(input_data[2].data(), { input_size }, tensor_options);
         //auto input_them_nstm = torch::from_blob(input_data[3].data(), { input_size }, tensor_options);
-
         auto input = torch::stack({ input_us_stm, input_them_stm }).clone();
-        auto target = torch::from_blob(output_data.data(), { 1 }, tensor_options).clone();
+
+        torch::Tensor target;
+        if constexpr (do_policy)
+        {
+            const auto target_index = policy_indexes.values[entry.from][entry.to];
+            if(target_index == -1)
+            {
+                cout << "NEGATIVE INDEX";
+                throw "NEGATIVE INDEX"; 
+            }
+
+            //target = torch::one_hot()
+
+            target = torch::zeros(policy_output_size, tensor_options);
+            target[target_index] = 1;
+
+            //cout << target_index;
+            //target = torch::one_hot(torch::tensor({ target_index }, tensor_options_index), 610).toType(data_type_val);
+
+            //target = target.clone();
+
+            //cout << (int)from_index << " " << (int)to_index << endl;
+        }
+        else
+        {
+            const auto wdl = is_black ? static_cast<data_type>(2 - entry.wdl) / 2 : static_cast<data_type>(entry.wdl) / 2;
+            OutputData output_data;
+            output_data[0] = wdl;
+            target = torch::from_blob(output_data.data(), { 1 }, tensor_options).clone();
+        }
 
         return
         {
@@ -284,11 +394,16 @@ public:
     }
 };
 
-struct Net : torch::nn::Module {
+struct MyNet : torch::nn::Module
+{
+    virtual torch::Tensor forward(const torch::Tensor& us_stm, const torch::Tensor& them_stm, const torch::Tensor& us_nstm, const torch::Tensor& them_nstm) = 0;
+};
+
+struct EvalNet : MyNet {
     torch::nn::Linear fc1{ nullptr };
     torch::nn::Linear fc2{ nullptr };
 
-    Net() {
+    EvalNet() {
         fc1 = register_module("fc1", torch::nn::Linear(input_size * input_sides, hidden_size));
         fc2 = register_module("fc2", torch::nn::Linear(hidden_size * (double_accumulator ? 2 : 1), 1));
     }
@@ -303,7 +418,8 @@ struct Net : torch::nn::Module {
             nstm = fc1->forward(nstm);
 
             auto combined = torch::cat({ stm, nstm }, 1);
-            combined = torch::relu(combined);
+            //combined = torch::relu(combined);
+            combined = torch::clamp(combined, 0, 1);
 
             auto result = fc2->forward(combined);
             return result;
@@ -318,7 +434,8 @@ struct Net : torch::nn::Module {
         }
     }
 
-    torch::Tensor forward(const torch::Tensor& us_stm, const torch::Tensor& them_stm, const torch::Tensor& us_nstm, const torch::Tensor& them_nstm) {
+    torch::Tensor forward(const torch::Tensor& us_stm, const torch::Tensor& them_stm, const torch::Tensor& us_nstm, const torch::Tensor& them_nstm) override
+    {
         auto result = forward_inner(us_stm, them_stm, us_nstm, them_nstm);
         result = torch::sigmoid(result);
         return result;
@@ -332,7 +449,27 @@ struct Net : torch::nn::Module {
     }
 };
 
-void print_params(const Net& model, int epoch)
+struct PolicyNet : MyNet
+{
+    torch::nn::Linear fc1{ nullptr };
+    torch::nn::Linear fc2{ nullptr };
+
+    PolicyNet() {
+        fc1 = register_module("fc1", torch::nn::Linear(input_size * input_sides, policy_hidden_size));
+        fc2 = register_module("fc2", torch::nn::Linear(policy_hidden_size, policy_output_size));
+    }
+
+    torch::Tensor forward(const torch::Tensor& us_stm, const torch::Tensor& them_stm, const torch::Tensor& us_nstm, const torch::Tensor& them_nstm) override
+    {
+        auto stm = torch::cat({ us_stm, them_stm }, 1);
+        stm = fc1->forward(stm);
+        stm = torch::relu(stm);
+        stm = fc2->forward(stm);
+        return stm;
+    }
+};
+
+void print_params(const MyNet& model, int epoch)
 {
     const string float_path = "C:/shared/ataxx/nets/current/default-" + to_string(epoch) + ".nnue-floats";
     auto file_float = ofstream(float_path, ios::out | ios::binary);
@@ -406,16 +543,21 @@ void print_time(chrono::time_point<chrono::high_resolution_clock> start)
 
 int main()
 {
+    //auto a = torch::one_hot(torch::tensor({ 5 }), 10).toType(data_type_val);
+    //cout << a;
+    //return 0;
+
     const auto start = chrono::high_resolution_clock::now();
     //auto device = torch::Device(torch::kCPU);
     auto device = torch::Device(torch::kCUDA);
 
     constexpr int32_t batch_size = 1024 * 128;
-    //constexpr int32_t batch_size = 1024 * 16;
+    //constexpr int32_t batch_size = 1024 * 32;
     //constexpr int32_t batch_size = 128;
 
-    constexpr auto test_path = "C:/shared/ataxx/data/data_test.bin";
-    auto test_reader = CachingReader(test_path);
+    constexpr auto test_path = "C:/shared/ataxx/data/data3M-policy.bin";
+    constexpr auto limit_test = 100'000;
+    auto test_reader = CachingReader(test_path, limit_test);
     auto test_transient_set = TransientDataset(test_reader);
     auto test_set = CachingDataset(test_transient_set).map(torch::data::transforms::Stack<>());
     //auto test_set = test_transient_set.map(torch::data::transforms::Stack<>());
@@ -432,10 +574,11 @@ int main()
     constexpr auto train_path = "C:/shared/ataxx/data/data22M-old.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data3M.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data_train_small.bin";
-    constexpr auto limit = 22'000'000;
+    constexpr auto limit_train = 22'000'000;
     //constexpr auto limit = -1;
-    auto train_reader = CachingReader(train_path, limit);
+    auto train_reader = CachingReader(train_path, limit_train);
     auto train_transient_set = TransientDataset(train_reader);
+    train_transient_set.get(0);
     auto train_set = CachingDataset(train_transient_set).map(torch::data::transforms::Stack<>());
     //auto train_set = train_transient_set.map(torch::data::transforms::Stack<>());
     auto train_size = train_set.size().value();
@@ -446,16 +589,24 @@ int main()
     print_time(start);
     cout << "Loaded training set" << endl;
 
-    auto net = Net();
+#if POLICY
+    auto net = PolicyNet();
+#else
+    auto net = EvalNet();
+#endif
+    
     net.to(device);
 
     auto adam_options = torch::optim::AdamOptions(0.001);
     auto optimizer = torch::optim::Adam(net.parameters(), adam_options);
+#if POLICY
+    auto criterion = torch::nn::CrossEntropyLoss();
+#else
     auto criterion = torch::nn::MSELoss();
-
+#endif
     data_type total_train_loss = 0.0;
     data_type total_test_loss = 0.0;
-    for (auto epoch = 0; epoch < 200; epoch++)
+    for (auto epoch = 0; epoch < 300; epoch++)
     {
         const auto epoch_start = chrono::high_resolution_clock::now();
         for (auto& batch : *train_loader)
@@ -465,37 +616,53 @@ int main()
             auto data = batch.data.to(device);
             auto target = batch.target.to(device);
 
-            auto us_stm = data.select(1, 0);
-            auto them_stm = data.select(1, 1);
-            auto us_nstm = torch::flip(them_stm, 1);
-            auto them_nstm = torch::flip(us_stm, 1);
-            auto prediction = net.forward(us_stm, them_stm, us_nstm, them_nstm);
-            auto prediction_flip = net.forward(them_nstm, us_nstm, them_stm, us_stm);
+            torch::Tensor predictions;
+            torch::Tensor targets;
+            if(do_policy)
+            {
+                auto us_stm = data.select(1, 0);
+                auto them_stm = data.select(1, 1);
+                auto us_nstm = torch::flip(them_stm, 1);
+                auto them_nstm = torch::flip(us_stm, 1);
+                //cout << us_stm.sizes() << endl;
+                //cout << target.sizes() << endl;
+                auto prediction = net.forward(us_stm, them_stm, us_nstm, them_nstm);
+                predictions = prediction;
+                targets = target;
+            }
+            else
+            {
+                auto us_stm = data.select(1, 0);
+                auto them_stm = data.select(1, 1);
+                auto us_nstm = torch::flip(them_stm, 1);
+                auto them_nstm = torch::flip(us_stm, 1);
+                auto prediction = net.forward(us_stm, them_stm, us_nstm, them_nstm);
+                auto prediction_flip = net.forward(them_nstm, us_nstm, them_stm, us_stm);
 
-            us_stm = us_stm.view({-1, 7, 7}).transpose(1, 2).reshape({-1, 49});
-            them_stm = them_stm.view({-1, 7, 7}).transpose(1, 2).reshape({-1, 49});
-            us_nstm = torch::flip(them_stm, 1);
-            them_nstm = torch::flip(us_stm, 1);
-            auto prediction_diagonal = net.forward(us_stm, them_stm, us_nstm, them_nstm);
-            auto prediction_diagonal_flip = net.forward(them_nstm, us_nstm, them_stm, us_stm);
+                us_stm = us_stm.view({ -1, 7, 7 }).transpose(1, 2).reshape({ -1, 49 });
+                them_stm = them_stm.view({ -1, 7, 7 }).transpose(1, 2).reshape({ -1, 49 });
+                us_nstm = torch::flip(them_stm, 1);
+                them_nstm = torch::flip(us_stm, 1);
+                auto prediction_diagonal = net.forward(us_stm, them_stm, us_nstm, them_nstm);
+                auto prediction_diagonal_flip = net.forward(them_nstm, us_nstm, them_stm, us_stm);
 
-            us_stm = us_stm.view({ -1, 7, 7 }).rot90(1, { 1, 2 }).reshape({ -1, 49 });
-            them_stm = them_stm.view({ -1, 7, 7 }).rot90(1, { 1, 2 }).reshape({ -1, 49 });
-            us_nstm = torch::flip(them_stm, 1);
-            them_nstm = torch::flip(us_stm, 1);
-            auto prediction_rot = net.forward(us_stm, them_stm, us_nstm, them_nstm);
-            auto prediction_rot_flip = net.forward(them_nstm, us_nstm, them_stm, us_stm);
+                us_stm = us_stm.view({ -1, 7, 7 }).rot90(1, { 1, 2 }).reshape({ -1, 49 });
+                them_stm = them_stm.view({ -1, 7, 7 }).rot90(1, { 1, 2 }).reshape({ -1, 49 });
+                us_nstm = torch::flip(them_stm, 1);
+                them_nstm = torch::flip(us_stm, 1);
+                auto prediction_rot = net.forward(us_stm, them_stm, us_nstm, them_nstm);
+                auto prediction_rot_flip = net.forward(them_nstm, us_nstm, them_stm, us_stm);
 
-            us_stm = us_stm.view({ -1, 7, 7 }).transpose(1, 2).reshape({ -1, 49 });
-            them_stm = them_stm.view({ -1, 7, 7 }).transpose(1, 2).reshape({ -1, 49 });
-            us_nstm = torch::flip(them_stm, 1);
-            them_nstm = torch::flip(us_stm, 1);
-            auto prediction_rot_diagonal = net.forward(us_stm, them_stm, us_nstm, them_nstm);
-            auto prediction_rot_diagonal_flip = net.forward(them_nstm, us_nstm, them_stm, us_stm);
+                us_stm = us_stm.view({ -1, 7, 7 }).transpose(1, 2).reshape({ -1, 49 });
+                them_stm = them_stm.view({ -1, 7, 7 }).transpose(1, 2).reshape({ -1, 49 });
+                us_nstm = torch::flip(them_stm, 1);
+                them_nstm = torch::flip(us_stm, 1);
+                auto prediction_rot_diagonal = net.forward(us_stm, them_stm, us_nstm, them_nstm);
+                auto prediction_rot_diagonal_flip = net.forward(them_nstm, us_nstm, them_stm, us_stm);
 
-            auto predictions = torch::stack({ prediction, prediction_flip, prediction_diagonal, prediction_diagonal_flip, prediction_rot, prediction_rot_flip, prediction_rot_diagonal, prediction_rot_diagonal_flip });
-            auto targets = torch::stack({ target, target, target, target, target, target, target, target });
-
+                predictions = torch::stack({ prediction, prediction_flip, prediction_diagonal, prediction_diagonal_flip, prediction_rot, prediction_rot_flip, prediction_rot_diagonal, prediction_rot_diagonal_flip });
+                targets = torch::stack({ target, target, target, target, target, target, target, target });
+            }
             auto loss = criterion->forward(predictions, targets);
 
             loss.backward();
@@ -533,31 +700,46 @@ int main()
         print_params(net, epoch);
     }
 
-    //torch::NoGradGuard no_grad;
+    torch::NoGradGuard no_grad;
 
-    //auto it = test_loader->begin();
-    //auto sample_data = it->data.clone();
-    //auto sample_target = it->target.reshape(-1);
+    net.to(torch::kCPU);
 
-    //stringstream ss;
-    //ss << setprecision(5);
+    auto it = test_loader->begin();
+    cout << it->data.sizes() << endl;
+    cout << it->target.sizes() << endl;
+    auto sample_data = it->data.select(0, 0).reshape({ -1, 2, 49 });
+    auto sample_target = it->target.select(0, 0).reshape({-1, 610});
+    cout << sample_data.sizes() << endl;
+    cout << sample_target.sizes() << endl;
 
-    //ss << "Targets: " << endl;
-    //for (auto i = 0; i < sample_data.size(0); i++)
-    //{
-    //    ss << sample_target[i].item<data_type>() << " ";
-    //}
-    //ss << endl << endl;
+    cout << setprecision(5);
 
-    //const auto predictions = net.forward(sample_data).reshape(-1);
+    cout << "Targets: " << endl;
+    for (auto i = 0; i < sample_target.size(1); i++)
+    {
+        cout << sample_target[0][i].item<data_type>() << " ";
+    }
+    cout << endl << endl;
+
+    auto us_stm = sample_data.select(1, 0).clone();
+    auto them_stm = sample_data.select(1, 1).clone();
+    auto us_nstm = torch::flip(them_stm, 1).clone();
+    auto them_nstm = torch::flip(us_stm, 1).clone();
+
+    cout << us_stm.sizes() << endl;
+    cout << them_stm.sizes() << endl;
+    cout << us_nstm.sizes() << endl;
+    cout << them_nstm.sizes() << endl;
+
+    const auto predictions = net.forward(us_stm, them_stm, us_nstm, them_nstm);
     //const auto predictions_no_sig = net.forward_no_sig(sample_data).reshape(-1);
-
-    //ss << "Predictions: " << endl;
-    //for (auto i = 0; i < sample_data.size(0); i++)
-    //{
-    //    ss << predictions[i].item<data_type>() << " ";
-    //}
-    //ss << endl << endl;
+    cout << predictions.sizes() << endl;
+    cout << "Predictions: " << endl;
+    for (auto i = 0; i < predictions.size(1); i++)
+    {
+        cout << static_cast<int32_t>(round(predictions[0][i].item<data_type>() * 128)) << " ";
+    }
+    cout << endl << endl;
 
     //ss << "Predictions no sigmoid: ";
     //for (auto i = 0; i < sample_data.size(0); i++)
@@ -565,8 +747,6 @@ int main()
     //    ss << predictions_no_sig[i].item<data_type>() << " ";
     //}
     //ss << endl << endl;
-    //auto str = ss.str();
-    //cout << str;
 
     return 0;
 }

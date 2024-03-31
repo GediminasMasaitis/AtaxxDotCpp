@@ -2,6 +2,7 @@
 
 #include "evaluation_nn_base.h"
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cmath>
@@ -25,6 +26,7 @@ Score EvaluationNnue::evaluate(const Position& pos)
         for (auto i = 0; i < EvaluationNnueBase::hidden_size; i++)
         {
             const auto relu = std::max(accumulator[i], static_cast<EvaluationNnueBase::nnue_param_t>(0));
+            //const auto relu = std::clamp(accumulator[i], static_cast<EvaluationNnueBase::nnue_param_t>(0), static_cast<EvaluationNnueBase::nnue_param_t>(128));
             score += relu * EvaluationNnueBase::hidden_weightses[c][i];
         }
     }

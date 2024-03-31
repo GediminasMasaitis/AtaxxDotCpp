@@ -9,7 +9,7 @@ find_package(Threads REQUIRED)
 find_package(Torch REQUIRED PATHS "C:/Libs/libtorch12/share/cmake/Torch")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
-add_executable(NnueTrainer "main.cpp")
+add_executable(NnueTrainer "main.cpp" )
 
 target_link_libraries(NnueTrainer PRIVATE Threads::Threads "${TORCH_LIBRARIES}")
 

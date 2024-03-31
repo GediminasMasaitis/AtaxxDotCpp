@@ -6,6 +6,13 @@
 
 #include <memory>
 
+#define MORESTATS 0
+#if MORESTATS
+static constexpr bool print_more_stats = true;
+#else
+static constexpr bool print_more_stats = false;
+#endif
+
 enum TranspositionTableFlag
 {
     Exact,
@@ -97,7 +104,13 @@ struct SearchState
     PrincipalVariationData saved_pv;
     TranspositionTable table;
     EachSquare<EachSquare<MoveScore>> history;
+
     uint64_t nodes;
+#if MORESTATS
+    uint64_t nodes_options;
+    uint64_t nodes_foundbest;
+    uint64_t nodes_bestindex;
+#endif
 
     void new_search(const PositionBase& pos, const SearchParameters& new_parameters)
     {

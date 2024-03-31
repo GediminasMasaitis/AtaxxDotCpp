@@ -1790,4 +1790,9 @@ info depth 19 time 84417 score 7 nodes 294315830 nps 3486452 pv b6 b2 c6 c3 d7 d
 1+0.01:
 Score of AtaxxDotCpp-2.21 vs AtaxxDotCpp-2.20: 2687 - 2153 - 160  [0.553] 5000
 37.25 +/- 9.5
+
+10+0.1:
+Score of AtaxxDotCpp-2.21 vs AtaxxDotCpp-2.20: 599 - 365 - 36  [0.617] 1000
+82.83 +/- 21.72
 ```
+

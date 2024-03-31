@@ -7,7 +7,6 @@
 
 #include <iostream>
 
-
 using namespace std;
 
 Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, const Score beta, const bool is_pv)
@@ -80,6 +79,7 @@ Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, c
     
     Score best_score = -inf;
     Move best_move = no_move;
+    MoveCount best_move_index = 0;
     TranspositionTableFlag flag = Upper;
     for(MoveCount move_index = 0; move_index < move_count; ++move_index)
     {
@@ -106,6 +106,10 @@ Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, c
         {
             best_score = score;
             best_move = move;
+            if constexpr (print_more_stats)
+            {
+                best_move_index = move_index;
+            }
 
             if(score > alpha)
             {
@@ -147,6 +151,15 @@ Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, c
         }
     }
 
+#if MORESTATS
+        if (flag != Upper)
+        {
+            state.nodes_options += move_count;
+            state.nodes_foundbest++;
+            state.nodes_bestindex += best_move_index + 1;
+        }
+#endif
+
     // STORE TRANSPOSITION TABLE
     if(!state.timer.stopped)
     {
@@ -183,6 +196,10 @@ SearchResult Search::iteratively_deepen(Position& pos)
             cout << " score " << score;
             cout << " nodes " << state.nodes;
             cout << " nps " << state.nodes * 1000 / elapsed;
+#if MORESTATS
+                cout << " best1 " << static_cast<double>(state.nodes_bestindex) / state.nodes_options;
+                cout << " best2 " << static_cast<double>(state.nodes_bestindex) / state.nodes_foundbest;
+#endif
             cout << " pv ";
             for (int i = 0; i < state.plies[0].principal_variation.length; ++i)
             {

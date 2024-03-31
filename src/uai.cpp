@@ -235,6 +235,14 @@ void Uai::handle_input(const std::string& command)
         {
             Datagen::read();
         }
+        else if (token == "dataconvert" || token == "dc")
+        {
+            Datagen::convert();
+        }
+        else if (token == "dataconvert2" || token == "dc2")
+        {
+            Datagen::convert2();
+        }
     }
 }
 

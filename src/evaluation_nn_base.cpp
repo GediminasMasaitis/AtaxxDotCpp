@@ -11,6 +11,7 @@
 using namespace std;
 
 #if _WIN32
+//#define ENABLE_INCBIN 1
 #else
 #define ENABLE_INCBIN 1
 #endif
@@ -19,11 +20,6 @@ using namespace std;
 #include "external/incbin/incbin.h"
 INCBIN(network, "networks/default.nnue-floats");
 #endif
-
-static constexpr Square get_index(const File file, const Rank rank)
-{
-    return rank * 7 + file;
-}
 
 static EvaluationNnueBase::nnue_param_t read(std::istream& stream)
 {
