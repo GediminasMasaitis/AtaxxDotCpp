@@ -429,8 +429,8 @@ void write_ext(ofstream& file, const DatagenResultExt& entry)
     file.write(reinterpret_cast<const char*>(&entry.turn), sizeof(entry.turn));
     file.write(reinterpret_cast<const char*>(&entry.wdl), sizeof(entry.wdl));
     file.write(reinterpret_cast<const char*>(&entry.score), sizeof(entry.score));
-    file.write(reinterpret_cast<const char*>(&entry.from), sizeof(entry.from));
-    file.write(reinterpret_cast<const char*>(&entry.to), sizeof(entry.to));
+    //file.write(reinterpret_cast<const char*>(&entry.from), sizeof(entry.from));
+    //file.write(reinterpret_cast<const char*>(&entry.to), sizeof(entry.to));
 }
 
 void set_pos(PositionBase& pos, const DatagenResultExt& entry)
@@ -496,8 +496,8 @@ std::vector<std::string> split_by_delimiter(const std::string& str, const std::s
 
 void Datagen::convert2()
 {
-    const auto path = "C:/shared/ataxx/data/Zataxx-67M.txt";
-    const auto out_path = "C:/shared/ataxx/data/Zataxx-67M-policy.bin";
+    const auto path = "C:/shared/ataxx/data/Zataxx-550M.txt";
+    const auto out_path = "C:/shared/ataxx/data/Zataxx-550M.bin";
     auto file = ifstream(path);
     auto out_file = ofstream(out_path, ios::binary);
 
@@ -521,16 +521,8 @@ void Datagen::convert2()
         entry.white = pos.Bitboards[Pieces::White];
         entry.black = pos.Bitboards[Pieces::Black];
         entry.turn = pos.Turn;
-        auto move_str = tokens[1];
-        if(move_str == "0000")
-        {
-            continue;
-        }
-        auto move = Move::from_move_str(pos.Turn, move_str);
-        entry.from = move.From;
-        entry.to = move.To;
-        entry.score = stoi(tokens[2]);
-        auto wdl = stof(tokens[3]);
+        entry.score = stoi(tokens[1]);
+        auto wdl = stof(tokens[2]);
         auto wdl2 = static_cast<int8_t>(2 - (wdl * 2));
         entry.wdl = wdl2;
 
@@ -540,6 +532,7 @@ void Datagen::convert2()
         if (index % print_every == print_every - 1)
         {
             cout << "Read " << index + 1 << " entries" << endl;
+            out_file.flush();
         }
         index++;
     }

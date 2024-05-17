@@ -40,7 +40,7 @@ struct DataEntry
 #define POLICY 0
 
 #if POLICY
-static constexpr bool do_policy = true;
+static constexpr bool do_policy = false;
 #else
 static constexpr bool do_policy = false;
 #endif
@@ -555,7 +555,7 @@ int main()
     //constexpr int32_t batch_size = 1024 * 32;
     //constexpr int32_t batch_size = 128;
 
-    constexpr auto test_path = "C:/shared/ataxx/data/data3M-policy.bin";
+    constexpr auto test_path = "C:/shared/ataxx/data/data3M.bin";
     constexpr auto limit_test = 100'000;
     auto test_reader = CachingReader(test_path, limit_test);
     auto test_transient_set = TransientDataset(test_reader);
@@ -571,16 +571,16 @@ int main()
     print_time(start);
     cout << "Loaded test set" << endl;
 
-    constexpr auto train_path = "C:/shared/ataxx/data/data22M-old.bin";
+    constexpr auto train_path = "C:/shared/ataxx/data/Zataxx-550M.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data3M.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data_train_small.bin";
-    constexpr auto limit_train = 22'000'000;
+    constexpr auto limit_train = 10'000'000;
     //constexpr auto limit = -1;
     auto train_reader = CachingReader(train_path, limit_train);
     auto train_transient_set = TransientDataset(train_reader);
     train_transient_set.get(0);
-    auto train_set = CachingDataset(train_transient_set).map(torch::data::transforms::Stack<>());
-    //auto train_set = train_transient_set.map(torch::data::transforms::Stack<>());
+    //auto train_set = CachingDataset(train_transient_set).map(torch::data::transforms::Stack<>());
+    auto train_set = train_transient_set.map(torch::data::transforms::Stack<>());
     auto train_size = train_set.size().value();
     auto train_loader_options = torch::data::DataLoaderOptions();
     train_loader_options.batch_size(batch_size);
