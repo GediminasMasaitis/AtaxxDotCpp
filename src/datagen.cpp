@@ -57,12 +57,14 @@ struct DatagenStats
 {
     DatagenStatsEntry total{};
     DatagenStatsEntry win_by_elimination{};
+    DatagenStatsEntry discarded_initial{};
     DatagenStatsEntry discarded_repetition{};
 
     DatagenStats& operator+=(const DatagenStats& other)
     {
         total += other.total;
         win_by_elimination += other.win_by_elimination;
+        discarded_initial += other.discarded_initial;
         discarded_repetition += other.discarded_repetition;
         return *this;
     }
@@ -107,7 +109,7 @@ void write_results_epd(ostream& stream, const vector<DatagenResult>& results)
     stream.flush();
 }
 
-optional<Wdl> adjudicate(const Position& pos)
+optional<Wdl> adjudicate(const Position& pos, Score score)
 {
     if(pos.Bitboards[pos.Turn] == 0)
     {
@@ -130,13 +132,22 @@ optional<Wdl> adjudicate(const Position& pos)
         return 1;
     }
 
+    if(score > 8000)
+    {
+        return 2;
+    }
+    if(score < -8000)
+    {
+        return 0;
+    }
+
     return nullopt;
 }
 
 void do_random_moves(Position& pos, mt19937_64& rng)
 {
     bool generate_initial_position = true;
-    const MoveCount random_move_count = rng() % 2 == 0 ? 8 : 9;
+    const MoveCount random_move_count = rng() % 2 == 0 ? 10 : 15;
     while (generate_initial_position)
     {
         pos = initial_pos;
@@ -145,7 +156,7 @@ void do_random_moves(Position& pos, mt19937_64& rng)
             MoveArray moves;
             MoveCount move_count = 0;
 
-            const auto do_far = (rng() % 3) == 0;
+            const auto do_far = (rng() % 2) == 0;
             if (do_far)
             {
                 MoveGenerator::generate_far(pos, moves, move_count);
@@ -176,6 +187,7 @@ void do_random_moves(Position& pos, mt19937_64& rng)
             const auto move = moves[move_index];
             pos.make_move_in_place(move);
         }
+        auto eval = Evaluation::evaluate(pos);
         generate_initial_position = pos.is_terminal();
     }
 }
@@ -222,17 +234,42 @@ void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search
     SearchParameters parameters;
     parameters.nodes_min = 10000;
     parameters.nodes_max = 50000;
+    parameters.white_time = 1000000;
+    parameters.black_time = 1000000;
     parameters.print_info = false;
     parameters.print_bestmove = false;
 
+    search.state.clear();
+    SearchResult search_result = search.run(pos, parameters);
+    if(abs(search_result.score) > 500)
+    {
+        lock_guard lock(mut);
+        thread_stats.discarded_initial += iteration_stats_entry;
+        thread_stats.total += iteration_stats_entry;
+        return;
+    }
+
+    search.state.clear();
     while(true)
     {
         //Display::display_position(pos);
-        const SearchResult search_result = search.run(pos, parameters);
+        search_result = search.run(pos, parameters);
+
+        if (abs(search_result.score) > 8000)
+        {
+            break;
+        }
+
+        if (pos.is_terminal())
+        {
+            break;
+        }
+
         const DatagenResult datagen_result = DatagenResult{ pos, 0, search_result.score };
         iteration_results.push_back(datagen_result);
         const Move best_move = search.state.saved_pv.moves[0];
         pos.make_move_in_place(best_move);
+        
         iteration_stats_entry.positions++;
         iteration_stats_entry.nodes += search.state.nodes;
 
@@ -247,16 +284,9 @@ void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search
                 return;
             }
         }
-
-        if(pos.is_terminal())
-        {
-            break;
-        }
     }
 
-    //Display::display_position(pos);
-    const auto adj_result = adjudicate(pos);
-
+    const auto adj_result = adjudicate(pos, search_result.score);
     assert(adj_result.has_value());
     Wdl wdl = adj_result.value();
     if (pos.Turn == Colors::Black)
@@ -315,14 +345,16 @@ static void print_stats(const DatagenStats& stats, time_point<high_resolution_cl
     const auto pps = static_cast<double>(stats.total.positions) / elapsedSecondCount;
     const auto pps_int = static_cast<size_t>(pps);
 
-    const auto discarded_percent = (static_cast<double>(stats.discarded_repetition.positions) / static_cast<double>(stats.total.positions)) * 100;
+    const auto initial_percent = (static_cast<double>(stats.discarded_initial.games) / static_cast<double>(stats.total.games)) * 100;
+    const auto repetition_percent = (static_cast<double>(stats.discarded_repetition.positions) / static_cast<double>(stats.total.positions)) * 100;
     const auto eliminations_percent = (static_cast<double>(stats.win_by_elimination.games) / static_cast<double>(stats.total.games)) * 100;
 
     auto ss = stringstream();
     ss << " Games: " << std::right << std::setw(4) << stats.total.games;
     ss << " Positions: " << std::right << std::setw(9) << stats.total.positions;
     ss << " (" << std::right << std::setw(3) << pps_int << " PPS)";
-    ss << " Discarded: " << std::fixed << std::setprecision(3) << discarded_percent << "%";
+    ss << " Init: " << std::fixed << std::setprecision(3) << initial_percent << "%";
+    ss << " Rep: " << std::fixed << std::setprecision(3) << repetition_percent << "%";
     ss << " Eliminations: " << std::fixed << std::setprecision(3) << eliminations_percent << "%";
     ss << std::endl;
 

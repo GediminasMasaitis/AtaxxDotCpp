@@ -429,15 +429,16 @@ int main()
     print_time(start);
     cout << "Loaded test set" << endl;
 
-    constexpr auto train_path = "C:/shared/ataxx/data/data22M-old.bin";
+    constexpr auto train_path = "C:/shared/ataxx/data/Zataxx-550M.bin";
+    //constexpr auto train_path = "C:/shared/ataxx/data/data40Mnew.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data3M.bin";
     //constexpr auto train_path = "C:/shared/ataxx/data/data_train_small.bin";
-    constexpr auto limit = 22'000'000;
+    constexpr auto limit = 545'000'000;
     //constexpr auto limit = -1;
     auto train_reader = CachingReader(train_path, limit);
     auto train_transient_set = TransientDataset(train_reader);
-    auto train_set = CachingDataset(train_transient_set).map(torch::data::transforms::Stack<>());
-    //auto train_set = train_transient_set.map(torch::data::transforms::Stack<>());
+    //auto train_set = CachingDataset(train_transient_set).map(torch::data::transforms::Stack<>());
+    auto train_set = train_transient_set.map(torch::data::transforms::Stack<>());
     auto train_size = train_set.size().value();
     auto train_loader_options = torch::data::DataLoaderOptions();
     train_loader_options.batch_size(batch_size);
@@ -504,6 +505,7 @@ int main()
             const auto this_batch_size = batch.data.size(0);
             const auto this_loss = loss.item<data_type>();
             total_train_loss += this_loss * this_batch_size;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
 
         torch::NoGradGuard no_grad;

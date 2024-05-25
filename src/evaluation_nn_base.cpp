@@ -46,7 +46,7 @@ void EvaluationNnueBase::init()
     cout << "Using included NNUE" << endl;
 #else
     #ifdef _WIN32
-        constexpr auto path = "C:/shared/ataxx/nets/default.nnue-floats";
+        constexpr auto path = "C:/shared/ataxx/AtaxxDotCpp/src/networks/default.nnue-floats";
     #else
         constexpr auto path = "/mnt/c/shared/ataxx/nets/default.nnue-floats";
     #endif
