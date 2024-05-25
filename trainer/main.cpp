@@ -35,7 +35,7 @@ struct DataEntry
 
 constexpr int32_t input_size = 49;
 constexpr int32_t input_sides = 2;
-constexpr int32_t hidden_size = 256;
+constexpr int32_t hidden_size = 512;
 constexpr bool double_accumulator = true;
 using InputData = std::array<data_type, input_size>;
 using InputDatas = std::array<InputData, 2>;
@@ -505,7 +505,7 @@ int main()
             const auto this_batch_size = batch.data.size(0);
             const auto this_loss = loss.item<data_type>();
             total_train_loss += this_loss * this_batch_size;
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
 
         torch::NoGradGuard no_grad;
