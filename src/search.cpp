@@ -63,7 +63,7 @@ Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, c
     // INTERNAL ITERATIVE REDUCTION
     else if(depth > 3)
     {
-        depth--;
+        depth -= 2;
     }
 
     // REVERSE FUTILITY PRUNING
