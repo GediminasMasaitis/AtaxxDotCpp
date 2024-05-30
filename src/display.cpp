@@ -28,9 +28,9 @@ Score run_search(Position& pos, Square removed_sq, const SearchParameters parame
     const auto result = search.run(pos, parameters);
     const auto pov_score = pos.Turn == Colors::White ? result.score : -result.score;
     cout << "score cp " << pov_score << " pv ";
-    for (int i = 0; i < search.state.saved_pv.length; ++i)
+    for (int i = 0; i < search.state.threads[0].saved_pv.length; ++i)
     {
-        const Move& pv_move = search.state.saved_pv.moves[i];
+        const Move& pv_move = search.state.threads[0].saved_pv.moves[i];
         cout << pv_move.to_move_str() << " ";
     }
     cout << endl;

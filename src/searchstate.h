@@ -31,7 +31,7 @@ struct TranspositionTable
 
     void set_size(const size_t size)
     {
-        auto previous_entry_count = entry_count;
+        const auto previous_entry_count = entry_count;
         entry_count = size / sizeof(TranspositionTableEntry);
         if(entry_count != previous_entry_count)
         {
@@ -101,13 +101,12 @@ struct PlyState
     }
 };
 
-struct SearchState
+struct ThreadState
 {
     SearchParameters parameters;
     Timer timer;
     EachPly<PlyState> plies;
     PrincipalVariationData saved_pv;
-    TranspositionTable table;
     EachSquare<EachSquare<MoveScore>> history;
     uint64_t nodes;
 
@@ -124,9 +123,9 @@ struct SearchState
         }
 
         // Age history table
-        for(Square from = 0; from < 64; from++)
+        for (Square from = 0; from < 64; from++)
         {
-            for(Square to = 0; to < 64; to++)
+            for (Square to = 0; to < 64; to++)
             {
                 history[from][to] /= 8;
             }
@@ -142,9 +141,44 @@ struct SearchState
             ply.clear();
         }
         saved_pv.length = 0;
-        table.clear();
+        
         history = { };
         nodes = 0;
+    }
+};
+
+struct SearchState
+{
+    TranspositionTable table;
+    std::vector<ThreadState> threads = std::vector<ThreadState>();
+
+    void init_threads_from_options()
+    {
+        const auto current_threads = threads.size();
+        threads.resize(Options::Threads);
+        for(auto i = current_threads; i < Options::Threads; i++)
+        {
+            threads[i].clear();
+        }
+    }
+
+    void new_search(const PositionBase& pos, const SearchParameters& new_parameters)
+    {
+        init_threads_from_options();
+        for(auto& thread : threads)
+        {
+            thread.new_search(pos, new_parameters);
+        }
+    }
+
+    void clear()
+    {
+        init_threads_from_options();
+        table.clear();
+        for(auto& thread : threads)
+        {
+            thread.clear();
+        }
     }
 };
 

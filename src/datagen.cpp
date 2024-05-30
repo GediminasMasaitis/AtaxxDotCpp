@@ -267,11 +267,11 @@ void run_iteration(const ThreadCount thread_id, const uint64_t iteration, Search
 
         const DatagenResult datagen_result = DatagenResult{ pos, 0, search_result.score };
         iteration_results.push_back(datagen_result);
-        const Move best_move = search.state.saved_pv.moves[0];
+        const Move best_move = search.state.threads[0].saved_pv.moves[0];
         pos.make_move_in_place(best_move);
         
         iteration_stats_entry.positions++;
-        iteration_stats_entry.nodes += search.state.nodes;
+        iteration_stats_entry.nodes += search.state.threads[0].nodes;
 
         // On repetition, discard
         for(int i = 0; i < pos.HistoryCount; i++)

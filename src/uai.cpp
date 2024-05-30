@@ -25,6 +25,7 @@ void Uai::handle_uai()
     cout << "id author Gediminas Masaitis" << endl;
     cout << endl;
     cout << "option name Hash type spin default " + to_string(Options::Defaults::hash) + " min " << to_string(Options::Min::hash) << " max " << to_string(Options::Max::hash) << endl;
+    cout << "option name Threads type spin default " + to_string(Options::Defaults::threads) + " min " << to_string(Options::Min::threads) << " max " << to_string(Options::Max::threads) << endl;
     cout << "uaiok" << endl;
 }
 
@@ -176,6 +177,11 @@ void Uai::handle_setoption(std::stringstream& reader)
         Options::Hash = static_cast<size_t>(std::stoull(value));
         search.state.table.set_size_from_options();
     }
+    else if (name == "Threads")
+    {
+        Options::Threads = static_cast<ThreadId>(std::stoull(value));
+        search.state.init_threads_from_options();
+    }
 }
 
 void Uai::handle_input(const std::string& command)
@@ -268,6 +274,7 @@ void Uai::run()
     current_pos = Fens::parse(initial_fen);
     search = Search();
     search.state.table.set_size_from_options();
+    search.state.clear();
 
     while (true)
     {

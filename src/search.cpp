@@ -10,9 +10,9 @@
 
 using namespace std;
 
-Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, const Score beta, const bool is_pv)
+Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, const Ply ply, Score alpha, const Score beta, const bool is_pv)
 {
-    auto& ply_state = state.plies[ply];
+    auto& ply_state = thread_state.plies[ply];
 
     // LOSS BY NO PIECES
     if(pos.Bitboards[pos.Turn] == 0)
@@ -39,7 +39,7 @@ Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, c
 
     // EARLY EXITS
     const Score static_eval = Evaluation::evaluate(pos);
-    if(depth == 0 || ply == max_ply - 1 || depth > 2 && state.timer.should_stop_max(state.nodes))
+    if(depth == 0 || ply == max_ply - 1 || depth > 2 && thread_state.timer.should_stop_max(thread_state.nodes))
     {
         return static_eval;
     }
@@ -76,7 +76,7 @@ Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, c
     MoveCount move_count = 0;
     MoveGenerator::generate_all(pos, moves, move_count);
     MoveScoreArray move_scores;
-    MoveOrder::calculate_move_scores(pos, state, tt_entry.move, moves, move_scores, move_count);
+    MoveOrder::calculate_move_scores(pos, thread_state, tt_entry.move, moves, move_scores, move_count);
     
     Score best_score = -inf;
     Move best_move = no_move;
@@ -87,18 +87,18 @@ Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, c
 
         const auto& move = moves[move_index];
         pos.make_move_in_place(move);
-        state.nodes++;
+        thread_state.nodes++;
 
         // PRINCIPAL VARIATION SEARCH
         Score score;
         if(move_index > 0)
         {
             const auto reduction = move_index > 8 && depth > 4 ? 2 : 0;
-            score = -alpha_beta(pos, depth - 1 - reduction, ply + 1, -alpha - 1, -alpha, false);
+            score = -alpha_beta(thread_state, pos, depth - 1 - reduction, ply + 1, -alpha - 1, -alpha, false);
         }
         if(move_index == 0 || (score > alpha && score < beta))
         {
-            score = -alpha_beta(pos, depth - 1, ply + 1, -beta, -alpha, is_pv);
+            score = -alpha_beta(thread_state, pos, depth - 1, ply + 1, -beta, -alpha, is_pv);
         }
         pos.unmake_move();
 
@@ -113,7 +113,7 @@ Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, c
 
                 if(score >= beta)
                 {
-                    state.history[move.From][move.To] += depth * depth;
+                    thread_state.history[move.From][move.To] += depth * depth;
                     flag = Lower;
                     break;
                 }
@@ -125,7 +125,7 @@ Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, c
                 this_ply_pv.moves[0] = best_move;
                 if (ply < max_ply - 1)
                 {
-                    PlyState& next_ply_state = state.plies[ply + 1];
+                    PlyState& next_ply_state = thread_state.plies[ply + 1];
                     PrincipalVariationData& next_ply_pv = next_ply_state.principal_variation;
                     this_ply_pv.length = static_cast<Ply>(1 + next_ply_pv.length);
                     for (Ply next_ply_index = 0; next_ply_index < next_ply_pv.length; next_ply_index++)
@@ -148,7 +148,7 @@ Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, c
     }
 
     // STORE TRANSPOSITION TABLE
-    if(!state.timer.stopped)
+    if(!thread_state.timer.stopped)
     {
         state.table.set(pos.Key, flag, best_score, depth, best_move);
     }
@@ -156,55 +156,55 @@ Score Search::alpha_beta(Position& pos, Ply depth, const Ply ply, Score alpha, c
     return best_score;
 }
 
-SearchResult Search::iteratively_deepen(Position& pos)
+SearchResult Search::iteratively_deepen(ThreadState& thread_state, Position& pos)
 {
     Score score = 0;
     for(int depth = 1; depth <= max_ply; ++depth)
     {
-        score = alpha_beta(pos, depth, 0, -inf, inf, true);
-        if(state.timer.stopped)
+        score = alpha_beta(thread_state, pos, depth, 0, -inf, inf, true);
+        if(thread_state.timer.stopped)
         {
             break;
         }
 
-        state.saved_pv = state.plies[0].principal_variation;
+        thread_state.saved_pv = thread_state.plies[0].principal_variation;
 
-        Time elapsed = state.timer.elapsed();
+        Time elapsed = thread_state.timer.elapsed();
         if(elapsed == 0)
         {
             elapsed = 1;
         }
 
-        if (state.parameters.print_info)
+        if (thread_state.parameters.print_info)
         {
             cout << "info";
             cout << " depth " << depth;
             cout << " time " << elapsed;
             cout << " score " << score;
-            cout << " nodes " << state.nodes;
-            cout << " nps " << state.nodes * 1000 / elapsed;
+            cout << " nodes " << thread_state.nodes;
+            cout << " nps " << thread_state.nodes * 1000 / elapsed;
             cout << " pv ";
-            for (int i = 0; i < state.plies[0].principal_variation.length; ++i)
+            for (int i = 0; i < thread_state.plies[0].principal_variation.length; ++i)
             {
-                const Move& pv_move = state.plies[0].principal_variation.moves[i];
+                const Move& pv_move = thread_state.plies[0].principal_variation.moves[i];
                 cout << pv_move.to_move_str() << " ";
             }
             cout << endl;
         }
 
-        if (state.timer.should_stop_min(state.nodes))
+        if (thread_state.timer.should_stop_min(thread_state.nodes))
         {
             break;
         }
     }
 
-    if(state.parameters.print_bestmove)
+    if(thread_state.parameters.print_bestmove)
     {
-        const auto move_str = state.saved_pv.moves[0].to_move_str();
+        const auto move_str = thread_state.saved_pv.moves[0].to_move_str();
         cout << "bestmove " << move_str << endl;
     }
 
-    const SearchResult result = SearchResult(state.saved_pv.moves[0], score);
+    const SearchResult result = SearchResult(thread_state.saved_pv.moves[0], score);
     return result;
 }
 
@@ -213,7 +213,7 @@ SearchResult Search::run(Position& pos, const SearchParameters& parameters)
     state.new_search(pos, parameters);
     const auto original_enable_accumulator_stack = pos.enable_accumulator_stack;
     pos.enable_accumulator_stack = true;
-    const SearchResult result = iteratively_deepen(pos);
+    const SearchResult result = iteratively_deepen(state.threads[0], pos);
     pos.enable_accumulator_stack = original_enable_accumulator_stack;
     return result;
 }

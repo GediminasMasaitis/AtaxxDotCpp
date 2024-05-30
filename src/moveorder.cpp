@@ -1,7 +1,7 @@
 #include "moveorder.h"
 #include "attacks.h"
 
-void MoveOrder::calculate_move_scores(const PositionBase& position, const SearchState& state, const Move& tt_move, const MoveArray& moves, MoveScoreArray& move_scores, const MoveCount move_count)
+void MoveOrder::calculate_move_scores(const PositionBase& position, const ThreadState& state, const Move& tt_move, const MoveArray& moves, MoveScoreArray& move_scores, const MoveCount move_count)
 {
     for(int i = 0; i < move_count; i++)
     {
