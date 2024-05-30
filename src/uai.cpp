@@ -3,6 +3,7 @@
 #include "datagen.h"
 #include "display.h"
 #include "fens.h"
+#include "options.h"
 #include "position.h"
 #include "perft.h"
 
@@ -22,6 +23,8 @@ void Uai::handle_uai()
 {
     cout << "id name Ataxx.cpp" << endl;
     cout << "id author Gediminas Masaitis" << endl;
+    cout << endl;
+    cout << "option name Hash type spin default " + to_string(Options::Defaults::hash) + " min " << to_string(Options::Min::hash) << " max " << to_string(Options::Max::hash) << endl;
     cout << "uaiok" << endl;
 }
 
@@ -149,12 +152,30 @@ static void read_search_parameters(std::stringstream& reader, SearchParameters& 
     }
 }
 
-
 void Uai::handle_go(std::stringstream& reader)
 {
     SearchParameters parameters;
     read_search_parameters(reader, parameters);
     search.run(current_pos, parameters);
+}
+
+void Uai::handle_setoption(std::stringstream& reader)
+{
+    std::string temp;
+    std::string name;
+    std::string value;
+    reader >> temp >> name >> temp >> value;
+
+    if (name.empty() || value.empty())
+    {
+        return;
+    }
+
+    if (name == "Hash")
+    {
+        Options::Hash = static_cast<size_t>(std::stoull(value));
+        search.state.table.set_size_from_options();
+    }
 }
 
 void Uai::handle_input(const std::string& command)
@@ -184,6 +205,10 @@ void Uai::handle_input(const std::string& command)
         else if(token == "go")
         {
             handle_go(reader);
+        }
+        else if(token == "setoption")
+        {
+            handle_setoption(reader);
         }
         else if (token == "quit" || token == "exit")
         {
@@ -242,8 +267,7 @@ void Uai::run()
 {
     current_pos = Fens::parse(initial_fen);
     search = Search();
-    search.state.table.set_size(1024 * 1024 * 32);
-    search.state.clear();
+    search.state.table.set_size_from_options();
 
     while (true)
     {

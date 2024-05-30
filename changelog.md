@@ -1964,4 +1964,8 @@ Score of AtaxxDotCpp-3.2 vs AtaxxDotCpp-3.1: 3391 - 2419 - 190  [0.581] 6000
 ```
 Score of AtaxxDotCpp-3.1 vs AtaxxDotCpp-3.1: 567 - 390 - 43  [0.589] 1000
 62.15 +/- 21.39
-``
+```
+
+### 3.3
+
+Add hash UAI option

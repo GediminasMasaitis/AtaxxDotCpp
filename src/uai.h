@@ -21,6 +21,7 @@ class Uai
     void handle_position(std::stringstream& reader);
     void handle_perft(std::stringstream& reader);
     void handle_go(std::stringstream& reader);
+    void handle_setoption(std::stringstream& reader);
     void handle_input(const std::string& command);
 
 public:

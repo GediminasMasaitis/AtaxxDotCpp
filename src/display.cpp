@@ -23,8 +23,7 @@ Score run_search(Position& pos, Square removed_sq, const SearchParameters parame
     }
     cout.flush();
     Search search;
-    search.state.table.set_size(1024 * 1024 * 32);
-    search.state.clear();
+    search.state.table.set_size_from_options();
 
     const auto result = search.run(pos, parameters);
     const auto pov_score = pos.Turn == Colors::White ? result.score : -result.score;

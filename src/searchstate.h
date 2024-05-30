@@ -6,6 +6,8 @@
 
 #include <memory>
 
+#include "options.h"
+
 enum TranspositionTableFlag
 {
     Exact,
@@ -25,12 +27,22 @@ struct TranspositionTableEntry
 struct TranspositionTable
 {
     std::unique_ptr<TranspositionTableEntry[]> entries;
-    size_t entry_count;
-    
+    size_t entry_count = 0;
+
     void set_size(const size_t size)
     {
+        auto previous_entry_count = entry_count;
         entry_count = size / sizeof(TranspositionTableEntry);
-        entries = std::make_unique<TranspositionTableEntry[]>(entry_count);
+        if(entry_count != previous_entry_count)
+        {
+            entries = std::make_unique<TranspositionTableEntry[]>(entry_count);
+            clear();
+        }
+    }
+
+    void set_size_from_options()
+    {
+        set_size(Options::Hash * 1024 * 1024);
     }
 
     bool get(const ZobristKey key, TranspositionTableEntry& entry) const
