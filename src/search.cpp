@@ -98,7 +98,7 @@ Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, co
             auto reduction = 0;
             if(depth > 3 && move_index > 1)
             {
-                reduction = 1 + !is_pv;
+                reduction = 1 + !is_pv + move_index / 16;
             }
 
             score = -alpha_beta(thread_state, pos, depth - 1 - reduction, ply + 1, -alpha - 1, -alpha, false);
