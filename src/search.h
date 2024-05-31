@@ -18,6 +18,7 @@ public:
 
     Score alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, Ply ply, Score alpha, Score bet, bool is_pv);
     SearchResult iteratively_deepen(ThreadState& thread_state, Position& pos);
+    SearchResult lazy_smp(Position& pos);
     SearchResult run(Position& pos, const SearchParameters& parameters);
 };
 

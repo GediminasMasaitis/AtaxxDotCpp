@@ -25,7 +25,7 @@ struct Options
     {
     public:
         static constexpr size_t hash = 64 * 1024;
-        static constexpr ThreadId threads = 128;
+        static constexpr ThreadId threads = 127;
 
         Max() = delete;
     };

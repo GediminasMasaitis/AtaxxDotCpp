@@ -28,12 +28,17 @@ Time Timer::elapsed() const
 
 bool Timer::should_stop_min(const NodeCount nodes)
 {
+    if(stopped)
+    {
+        return true;
+    }
+
     if (infinite)
     {
         return false;
     }
 
-    if (stopped || (nodes_min > 0 && nodes > nodes_min) || (allocated_time_min > 0 && elapsed() >= allocated_time_min))
+    if ((nodes_min > 0 && nodes > nodes_min) || (allocated_time_min > 0 && elapsed() >= allocated_time_min))
     {
         stopped = true;
         return true;

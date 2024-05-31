@@ -6,7 +6,6 @@
 
 class Timer
 {
-    bool infinite;
     std::chrono::high_resolution_clock::time_point start_time;
     Time allocated_time_min;
     Time allocated_time_max;
@@ -15,6 +14,7 @@ class Timer
     NodeCount nodes_max;
 
 public:
+    bool infinite;
     bool stopped;
 
     void init(bool infinite, NodeCount nodes_min, NodeCount nodes_max, Time base, Time increment);

@@ -6,6 +6,7 @@
 #include "moveorder.h"
 
 #include <iostream>
+#include <thread>
 
 
 using namespace std;
@@ -208,12 +209,45 @@ SearchResult Search::iteratively_deepen(ThreadState& thread_state, Position& pos
     return result;
 }
 
+SearchResult Search::lazy_smp(Position& pos)
+{
+    vector<thread> threads;
+
+    for (ThreadId helper_id = 1; helper_id < Options::Threads; helper_id++)
+    {
+        state.threads[helper_id] = state.threads[0];
+        state.threads[helper_id].parameters.infinite = true;
+        state.threads[helper_id].parameters.print_info = false;
+        state.threads[helper_id].parameters.print_bestmove = false;
+        threads.emplace_back([this, helper_id, pos]()
+        {
+            auto pos_clone = pos;
+            auto& thread_state = state.threads[helper_id];
+            iteratively_deepen(thread_state, pos_clone);
+        });
+    }
+    
+    const auto result = iteratively_deepen(state.threads[0], pos);
+
+    for (ThreadId helperId = 1; helperId < Options::Threads; helperId++)
+    {
+        state.threads[helperId].timer.stopped = true;
+    }
+
+    for (ThreadId helperId = 1; helperId < Options::Threads; helperId++)
+    {
+        threads[helperId - 1].join();
+    }
+
+    return result;
+}
+
 SearchResult Search::run(Position& pos, const SearchParameters& parameters)
 {
     state.new_search(pos, parameters);
     const auto original_enable_accumulator_stack = pos.enable_accumulator_stack;
     pos.enable_accumulator_stack = true;
-    const SearchResult result = iteratively_deepen(state.threads[0], pos);
+    const SearchResult result = lazy_smp(pos);
     pos.enable_accumulator_stack = original_enable_accumulator_stack;
     return result;
 }

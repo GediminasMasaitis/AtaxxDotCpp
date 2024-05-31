@@ -1875,9 +1875,7 @@ info depth 18 time 87778 score 68 nodes 293899132 nps 3348209 pv b7 b2 b6 c2 b5 
 1+0.01:
 Score of AtaxxDotCpp-3.0 vs AtaxxDotCpp-2.21: 3963 - 919 - 118  [0.804] 5000
 245.64 +/- 11.90
-```
 
-```
 10+0.1:
 Score of AtaxxDotCpp-3.0 vs AtaxxDotCpp-2.21: 765 - 204 - 31  [0.780] 1000
 220.38 +/- 25.47
@@ -1916,9 +1914,7 @@ info depth 22 time 177902 score 31 nodes 568170576 nps 3193727 pv b6 f6 b7 e7 a6
 1+0.01:
 Score of AtaxxDotCpp-3.1 vs AtaxxDotCpp-3.0: 4982 - 4634 - 384  [0.517] 10000
 12.10 +/- 6.67
-```
 
-```
 10+0.1:
 Score of AtaxxDotCpp-3.1 vs AtaxxDotCpp-3.0: 5700 - 4724 - 576  [0.544] 11000
 30.91 +/- 6.34
@@ -1957,11 +1953,11 @@ info depth 25 time 974471 score 69 nodes 2196266423 nps 2253803 pv f2 b2 g2 c3 e
 ```
 
 ```
+1+0.01:
 Score of AtaxxDotCpp-3.2 vs AtaxxDotCpp-3.1: 3391 - 2419 - 190  [0.581] 6000
 56.78 +/- 8.75
-```
 
-```
+10+0.1:
 Score of AtaxxDotCpp-3.1 vs AtaxxDotCpp-3.1: 567 - 390 - 43  [0.589] 1000
 62.15 +/- 21.39
 ```
@@ -1969,3 +1965,19 @@ Score of AtaxxDotCpp-3.1 vs AtaxxDotCpp-3.1: 567 - 390 - 43  [0.589] 1000
 ### 3.3
 
 Add hash UAI option
+
+### 3.4
+
+Add lazy SMP
+
+Tests for 12 threads vs 1 thread:
+
+```
+5+0.05:
+Score of AtaxxDotCpp-3.4 vs AtaxxDotCpp-3.3: 122 - 64 - 14  [0.645] 200
+103.73 +/- 48.68
+
+40+0.4:
+Score of AtaxxDotCpp-3.4 vs AtaxxDotCpp-3.3: 127 - 95 - 18  [0.567] 240
+46.60 +/- 42.79
+```
