@@ -94,7 +94,13 @@ Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, co
         Score score;
         if (move_index > 0)
         {
-            const auto reduction = move_index > 8 && depth > 4 ? 2 : 0;
+            // LATE MOVE REDUCTION
+            auto reduction = 0;
+            if(depth > 3 && move_index > 1)
+            {
+                reduction = 1 + !is_pv;
+            }
+
             score = -alpha_beta(thread_state, pos, depth - 1 - reduction, ply + 1, -alpha - 1, -alpha, false);
             if (reduction > 0 && score > alpha)
             {
