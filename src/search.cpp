@@ -92,12 +92,20 @@ Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, co
 
         // PRINCIPAL VARIATION SEARCH
         Score score;
-        if(move_index > 0)
+        if (move_index > 0)
         {
             const auto reduction = move_index > 8 && depth > 4 ? 2 : 0;
             score = -alpha_beta(thread_state, pos, depth - 1 - reduction, ply + 1, -alpha - 1, -alpha, false);
+            if (reduction > 0 && score > alpha)
+            {
+                score = -alpha_beta(thread_state, pos, depth - 1, ply + 1, -alpha - 1, -alpha, false);
+            }
+            if (is_pv && score > alpha && score < beta)
+            {
+                score = -alpha_beta(thread_state, pos, depth - 1, ply + 1, -beta, -alpha, is_pv);
+            }
         }
-        if(move_index == 0 || (score > alpha && score < beta))
+        else
         {
             score = -alpha_beta(thread_state, pos, depth - 1, ply + 1, -beta, -alpha, is_pv);
         }
