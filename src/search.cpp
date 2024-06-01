@@ -38,6 +38,18 @@ Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, co
         return 0;
     }
 
+    // WIN BY JAILING
+    if(ply > 0 && pos.History[pos.HistoryCount - 1].move == passes[!pos.Turn])
+    {
+        const auto own_count = pop_count(pos.Bitboards[pos.Turn]);
+        const auto opp_count = pop_count(pos.Bitboards[!pos.Turn]);
+        const auto empty_count = pop_count(pos.Bitboards[Pieces::Empty]);
+        if(own_count + empty_count > opp_count)
+        {
+            return static_cast<Score>(mate - ply - empty_count);
+        }
+    }
+
     // EARLY EXITS
     const Score static_eval = Evaluation::evaluate(pos);
     if(depth == 0 || ply == max_ply - 1 || depth > 2 && thread_state.timer.should_stop_max(thread_state.nodes))

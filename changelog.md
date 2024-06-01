@@ -2133,3 +2133,15 @@ info depth 23 time 114060 score 53 nodes 269681045 nps 2364378 pv f2 b1 f1 a2 e3
 Score of AtaxxDotCpp-3.8 vs AtaxxDotCpp-3.7: 7454 - 7076 - 470  [0.513] 15000
 8.76 +/- 5.47
 ```
+
+### 3.9
+
+Win by jail detection
+
+No gain, but I want to have this.
+
+```
+1+0.01:
+Score of AtaxxDotCpp-3.9 vs AtaxxDotCpp-3.8: 4842 - 4827 - 331  [0.501] 10000
+0.52 +/- 6.69
+```
