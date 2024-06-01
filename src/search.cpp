@@ -68,7 +68,7 @@ Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, co
     }
 
     // REVERSE FUTILITY PRUNING
-    if(!is_pv && depth < 7 && static_eval - 100 * depth > beta)
+    if(!is_pv && depth < 8 && static_eval - 100 * depth > beta)
     {
         return beta;
     }

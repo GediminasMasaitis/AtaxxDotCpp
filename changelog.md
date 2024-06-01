@@ -2097,3 +2097,39 @@ Score of AtaxxDotCpp-3.7 vs AtaxxDotCpp-3.6: 2649 - 2186 - 165  [0.546] 5000
 Score of AtaxxDotCpp-3.7 vs AtaxxDotCpp-3.6: 271 - 204 - 25  [0.567] 500
 46.84 +/- 29.97
 ```
+
+### 3.8
+
+Deeper RFP
+
+```
+info depth 1 time 1 score -39 nodes 9 nps 9000 pv b6
+info depth 2 time 1 score 165 nodes 34 nps 34000 pv b6 f6
+info depth 3 time 1 score 10 nodes 269 nps 269000 pv f2 b1 b6
+info depth 4 time 1 score 96 nodes 585 nps 585000 pv f2 a2 e1 b2
+info depth 5 time 1 score 57 nodes 2406 nps 2406000 pv f2 a2 g2 b1 b6
+info depth 6 time 2 score 58 nodes 6922 nps 3461000 pv f2 f6 f1 g5 b6 g5e3
+info depth 7 time 7 score 23 nodes 25829 nps 3689857 pv f2 b2 a6 f7 g2 b1 a5
+info depth 8 time 9 score 68 nodes 33601 nps 3733444 pv f2 b2 a6 f6 f1 g5 b6 e7
+info depth 9 time 13 score 74 nodes 47191 nps 3630076 pv f2 b2 a6 f6 f1 g5 f3 e7 g4
+info depth 10 time 31 score 48 nodes 102882 nps 3318774 pv f2 b2 f1 f6 b6 a2 a5 a2b4 b5 b2a4
+info depth 11 time 68 score 59 nodes 221153 nps 3252250 pv f1 b2 g2 f6 e2 c2 f3 d3 e3 c2e4 e2d4
+info depth 12 time 154 score 45 nodes 488957 nps 3175045 pv f2 b2 b6 a2 g2 b1 f1 f6 e2 g5 e2c1 g5f3
+info depth 13 time 302 score 82 nodes 907966 nps 3006509 pv f2 b2 g2 f6 g3 a2 f1 c2 b6 e7 b7 a3 f3
+info depth 14 time 451 score 62 nodes 1327042 nps 2942443 pv f2 b2 g2 f6 g3 b1 f1 a3 b6 a2 e2 c3 d3 c2
+info depth 15 time 1239 score 66 nodes 3496120 nps 2821727 pv f2 b2 g3 f6 f1 a2 g2 g5 f4 f5 g4 g6 f4e6 f7 f5e7
+info depth 16 time 1731 score 66 nodes 4837408 nps 2794574 pv f2 b2 g3 f6 f1 a2 g2 g5 f4 f5 g4 g6 f4e6 f7 f5e7
+info depth 17 time 2802 score 60 nodes 7727254 nps 2757763 pv f2 b2 g3 f6 f1 e7 e2 c2 d2 b2d3 e3 c2e1 g2 e1f3 e1 e3d1 e3
+info depth 18 time 4683 score 60 nodes 12728916 nps 2718111 pv f2 b2 g3 a2 f1 c1 g2g4 d2 g4g6 e2 g2 e1 f3 e3 g3 e3g4 e4
+info depth 19 time 6593 score 60 nodes 17732011 nps 2689520 pv f2 b2 g3 f6 f1 e7 e2 b1 d2 b2d1 e2 c1 e3 d1d3 f3 d1 e4
+info depth 20 time 10451 score 67 nodes 27191157 nps 2601775 pv f2 b2 g2 a2 f1 c2 b6 c1 f1d2 b1 d1 c3 d1d3 b3 c1a3 c4 b6d4 c1
+info depth 21 time 51676 score 51 nodes 123454261 nps 2389005 pv f2 f6 f1 b2 e3 b1 d3 e5 c2 a2 c1 e5c3 d2 f6d4 d2e4 d2 e2 c3d5 d1 e4g2 e1
+info depth 22 time 95306 score 19 nodes 224531109 nps 2355896 pv f2 b2 e2 f6 d2 a3 c3 a1c2 e2c3 c1b3 f2d3 c1 d3d1 b3d3 c1b3 a1c1 c3e5 g7e6 b3d5 f6d6 c3a2
+info depth 23 time 114060 score 53 nodes 269681045 nps 2364378 pv f2 b1 f1 a2 e3 c2 d3 b1d2 e2 c3 d1 c3e1 e3g2 d3c1 f3 e3 g3 d2b3 b1a3 c5 c3a2
+```
+
+```
+1+0.01:
+Score of AtaxxDotCpp-3.8 vs AtaxxDotCpp-3.7: 7454 - 7076 - 470  [0.513] 15000
+8.76 +/- 5.47
+```
