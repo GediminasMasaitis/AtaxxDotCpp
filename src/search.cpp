@@ -141,6 +141,10 @@ Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, co
                 if(score >= beta)
                 {
                     thread_state.history[move.From][move.To] += depth * depth;
+                    for(MoveCount i = 0; i < move_index; i++)
+                    {
+                        thread_state.history[moves[i].From][moves[i].To] -= depth * depth;
+                    }
                     flag = Lower;
                     break;
                 }
