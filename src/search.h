@@ -17,6 +17,7 @@ public:
     SearchState state;
 
     Score alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, Ply ply, Score alpha, Score bet, bool is_pv);
+    Score aspiration_window(ThreadState& thread_state, Position& pos, Ply depth, Score previous);
     SearchResult iteratively_deepen(ThreadState& thread_state, Position& pos);
     SearchResult lazy_smp(Position& pos);
     SearchResult run(Position& pos, const SearchParameters& parameters);

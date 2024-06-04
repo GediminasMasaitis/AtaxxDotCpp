@@ -187,12 +187,38 @@ Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, co
     return best_score;
 }
 
+Score Search::aspiration_window(ThreadState& thread_state, Position& pos, const Ply depth, Score previous)
+{
+    if(depth < 6)
+    {
+        return alpha_beta(thread_state, pos, depth, 0, -inf, inf, true);
+    }
+
+    int32_t window = 32;
+    while(true)
+    {
+        const Score alpha = static_cast<Score>(max(previous - window, -inf));
+        const Score beta = static_cast<Score>(min(previous + window, static_cast<int32_t>(inf)));
+        const Score score = alpha_beta(thread_state, pos, depth, 0, alpha, beta, true);
+        if(score <= alpha || score >= beta)
+        {
+            window *= 2;
+            previous = score;
+        }
+        else
+        {
+            return score;
+        }
+    }
+}
+
 SearchResult Search::iteratively_deepen(ThreadState& thread_state, Position& pos)
 {
     Score score = 0;
     for(int depth = 1; depth <= max_ply; ++depth)
     {
-        score = alpha_beta(thread_state, pos, depth, 0, -inf, inf, true);
+        //score = alpha_beta(thread_state, pos, depth, 0, -inf, inf, true);
+        score = aspiration_window(thread_state, pos, depth, score);
         if(thread_state.timer.stopped)
         {
             break;

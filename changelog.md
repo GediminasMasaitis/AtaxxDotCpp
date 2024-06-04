@@ -2184,3 +2184,9 @@ Score of AtaxxDotCpp-3.10 vs AtaxxDotCpp-3.9: 4985 - 4707 - 308  [0.514] 10000
 Score of AtaxxDotCpp-3.10 vs AtaxxDotCpp-3.9: 492 - 459 - 49  [0.516] 1000
 11.47 +/- 21.01
 ```
+
+
+```
+Score of AtaxxDotCpp-3.11 vs AtaxxDotCpp-3.10: 4956 - 4738 - 306  [0.511] 10000
+7.58 +/- 6.70
+```
