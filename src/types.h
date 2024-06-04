@@ -163,7 +163,7 @@ using Score = int16_t;
 constexpr Score inf = 32000;
 constexpr Score mate = 31000;
 
-using MoveScore = int64_t;
+using MoveScore = int32_t;
 using Time = int64_t;
 using NodeCount = uint64_t;
 using ZobristKey = uint64_t;

@@ -9,13 +9,13 @@ void MoveOrder::calculate_move_scores(const PositionBase& position, const Thread
         const Move& move = moves[i];
         if(move == tt_move)
         {
-            move_score = 1LL << 60;
+            move_score = 1 << 30;
         }
         else
         {
             const Bitboard captures = Attacks.near[move.To] & position.Bitboards[!position.Turn];
             const int32_t material_gain = pop_count(captures) + (move.From == no_square ? 1 : 0);
-            move_score = 1LL << (50 + material_gain);
+            move_score = 1 << (20 + material_gain);
             move_score += state.history[move.From][move.To];
         }
         move_scores[i] = move_score;
