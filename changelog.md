@@ -2282,3 +2282,17 @@ Score of AtaxxDotCpp-3.11 vs AtaxxDotCpp-3.4: 1229 - 705 - 66  [0.631] 2000
 Score of AtaxxDotCpp-3.11 vs AtaxxDotCpp-3.4: 623 - 332 - 45  [0.646] 1000
 104.11 +/- 21.95
 ```
+
+### 3.12
+
+Use material-only eval when 1-square off
+
+```
+1+0.01:
+Score of AtaxxDotCpp-3.12 vs AtaxxDotCpp-3.11: 2498 - 2256 - 246  [0.524] 5000
+16.83 +/- 9.39
+
+10+0.1:
+Score of AtaxxDotCpp-3.12 vs AtaxxDotCpp-3.11: 507 - 415 - 78  [0.546] 1000
+32.05 +/- 20.75
+```
