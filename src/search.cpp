@@ -11,6 +11,14 @@
 
 using namespace std;
 
+Score material_eval(const Position& pos)
+{
+    Score score = 0;
+    score += static_cast<Score>(100 * pop_count(pos.Bitboards[pos.Turn]));
+    score -= static_cast<Score>(100 * pop_count(pos.Bitboards[!pos.Turn]));
+    return score;
+}
+
 Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, const Ply ply, Score alpha, const Score beta, const bool is_pv)
 {
     auto& ply_state = thread_state.plies[ply];
@@ -50,8 +58,17 @@ Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, co
         }
     }
 
+    Score static_eval;
+    if(pop_count(pos.Bitboards[Pieces::Empty]) == 1)
+    {
+        static_eval = material_eval(pos);
+    }
+    else
+    {
+        static_eval = Evaluation::evaluate(pos);
+    }
+
     // EARLY EXITS
-    const Score static_eval = Evaluation::evaluate(pos);
     if(depth == 0 || ply == max_ply - 1 || depth > 2 && thread_state.timer.should_stop_max(thread_state.nodes))
     {
         return static_eval;
