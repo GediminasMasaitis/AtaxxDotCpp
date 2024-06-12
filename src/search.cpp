@@ -211,16 +211,38 @@ Score Search::aspiration_window(ThreadState& thread_state, Position& pos, const 
         return alpha_beta(thread_state, pos, depth, 0, -inf, inf, true);
     }
 
-    int32_t window = 32;
+    constexpr Score window = 32;
+    constexpr Score termination = 5000;
+    Score widen = 32;
+    Score alpha = previous - window;
+    Score beta = previous + window;
     while(true)
     {
-        const Score alpha = static_cast<Score>(max(previous - window, -inf));
-        const Score beta = static_cast<Score>(min(previous + window, static_cast<int32_t>(inf)));
-        const Score score = alpha_beta(thread_state, pos, depth, 0, alpha, beta, true);
-        if(score <= alpha || score >= beta)
+        if (thread_state.timer.stopped)
         {
-            window *= 2;
-            previous = score;
+            return previous;
+        }
+
+        if (alpha < -termination)
+        {
+            alpha = -inf;
+        }
+        if (beta > termination)
+        {
+            beta = inf;
+        }
+
+        const Score score = alpha_beta(thread_state, pos, depth, 0, alpha, beta, true);
+        widen *= 2;
+        
+        if (score <= alpha)
+        {
+            alpha = static_cast<Score>(std::max(alpha - widen, -inf));
+            beta = (alpha + 3 * beta) / 4;
+        }
+        else if (score >= beta)
+        {
+            beta = std::min(static_cast<Score>(beta + widen), inf);
         }
         else
         {
