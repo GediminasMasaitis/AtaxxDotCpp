@@ -2333,3 +2333,9 @@ Score of AtaxxDotCpp-3.13 vs AtaxxDotCpp-3.12: 3831 - 3684 - 485  [0.509] 8000
 Score of AtaxxDotCpp-3.13 vs AtaxxDotCpp-3.12: 9482 - 8552 - 1966  [0.523] 20000
 16.17 +/- 4.57
 ```
+
+IID
+```
+Score of AtaxxDotCpp-3.14 vs AtaxxDotCpp-3.13: 1966 - 1894 - 230  [0.509] 4090
+6.12 +/- 10.33
+```

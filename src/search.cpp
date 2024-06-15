@@ -77,7 +77,9 @@ Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, co
     // TRANSPOSITION TABLE PROBING
     TranspositionTableEntry tt_entry;
     const bool tt_entry_exists = state.table.get(pos.Key, tt_entry);
+    Move tt_move = no_move;
     if (tt_entry_exists) {
+        tt_move = tt_entry.move;
         if (ply > 0 && tt_entry.depth >= depth) {
             if (tt_entry.flag == Upper && tt_entry.score <= alpha) {
                 return tt_entry.score;
@@ -104,6 +106,19 @@ Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, co
     if(!is_pv && depth < 8 && static_eval - 100 * depth > beta)
     {
         return beta;
+    }
+
+    // Internal iterative deepening
+    if (depth > 4 && alpha != beta - 1 && tt_move == no_move) {
+        alpha_beta(
+            thread_state,
+            pos,
+            depth - 4,
+            ply,
+            alpha,
+            beta,
+            is_pv
+        );
     }
 
     MoveArray moves;
