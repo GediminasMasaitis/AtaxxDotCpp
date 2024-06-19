@@ -77,16 +77,27 @@ Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, co
     // TRANSPOSITION TABLE PROBING
     TranspositionTableEntry tt_entry;
     const bool tt_entry_exists = state.table.get(pos.Key, tt_entry);
+
+    auto tt_score = tt_entry.score;
+    if (tt_entry.score > mate_threshold)
+    {
+        tt_score -= ply;
+    }
+    else if (tt_entry.score < -mate_threshold)
+    {
+        tt_score += ply;
+    }
+
     if (tt_entry_exists) {
         if (ply > 0 && tt_entry.depth >= depth) {
-            if (tt_entry.flag == Upper && tt_entry.score <= alpha) {
-                return tt_entry.score;
+            if (tt_entry.flag == Upper && tt_score <= alpha) {
+                return tt_score;
             }
-            if (tt_entry.flag == Lower && tt_entry.score >= beta) {
-                return tt_entry.score;
+            if (tt_entry.flag == Lower && tt_score >= beta) {
+                return tt_score;
             }
             if (tt_entry.flag == Exact) {
-                return tt_entry.score;
+                return tt_score;
             }
         }
     }
@@ -101,7 +112,7 @@ Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, co
     }
 
     // REVERSE FUTILITY PRUNING
-    if(!is_pv && depth < 8 && static_eval - 100 * depth > beta)
+    if(!is_pv && depth < 10 && static_eval - 100 * depth > beta)
     {
         return beta;
     }
@@ -202,7 +213,17 @@ Score Search::alpha_beta(ThreadState& thread_state, Position& pos, Ply depth, co
     // STORE TRANSPOSITION TABLE
     if(!thread_state.timer.stopped)
     {
-        state.table.set(pos.Key, flag, best_score, depth, best_move);
+        Score adjusted_score = best_score;
+        if (best_score > mate_threshold)
+        {
+            adjusted_score = static_cast<Score>(best_score + ply);
+        }
+        else if (best_score < mate_threshold)
+        {
+            adjusted_score = static_cast<Score>(best_score - ply);
+        }
+
+        state.table.set(pos.Key, flag, adjusted_score, depth, best_move);
     }
 
     return best_score;
